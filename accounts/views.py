@@ -159,9 +159,16 @@ def signup_patient(request):
                 return render(request, 'patient/signup_form/signup.html', {'form': form})
         else:
             # Form has errors, display them
+            # Handle non-field errors first (like password mismatch)
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    messages.error(request, str(error))
+            
+            # Handle field-specific errors
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field.title()}: {error}')
+                if field != '__all__':  # Skip non-field errors already handled
+                    for error in errors:
+                        messages.error(request, f'{field.replace("_", " ").title()}: {error}')
             return render(request, 'patient/signup_form/signup.html', {'form': form})
     
     else:
@@ -327,9 +334,16 @@ def signup_doctor(request):
                 return render(request, 'doctor/signup_form/signup.html', {'form': form})
         else:
             # Form has errors, display them
+            # Handle non-field errors first (like password mismatch)
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    messages.error(request, str(error))
+            
+            # Handle field-specific errors
             for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f'{field.title()}: {error}')
+                if field != '__all__':  # Skip non-field errors already handled
+                    for error in errors:
+                        messages.error(request, f'{field.replace("_", " ").title()}: {error}')
             return render(request, 'doctor/signup_form/signup.html', {'form': form})
 
 

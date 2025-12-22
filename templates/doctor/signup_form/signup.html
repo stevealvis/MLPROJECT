@@ -182,16 +182,85 @@
 
   .alert {
     background: linear-gradient(45deg, #FFE5E5, #FFF0F0);
-    border: 2px solid #FFB3B3;
+    border: 2px solid #FF6B6B;
     border-radius: 15px;
-    padding: 15px;
+    padding: 15px 20px;
     margin-bottom: 25px;
+    animation: shake 0.5s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
   }
 
   .alert h3 {
     color: #FF6B6B;
     margin: 0;
     font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alert h3::before {
+    content: "⚠️";
+    font-size: 1.2rem;
+  }
+
+  .field-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    margin-left: 50px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    animation: fadeInError 0.3s ease;
+    font-weight: 500;
+  }
+
+  .field-error::before {
+    content: "✗";
+    font-size: 0.9rem;
+  }
+
+  .input-container.error,
+  .select-container.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+    animation: shakeField 0.3s ease;
+  }
+
+  .input-container.success,
+  .select-container.success {
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2);
+  }
+
+  .radio-container.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  @keyframes shakeField {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  @keyframes fadeInError {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .form-row {
@@ -303,7 +372,7 @@
               <span class="focus-border"></span>
             </div>
             {% if form.username.errors %}
-              <div class="text-danger small">{{ form.username.errors.0 }}</div>
+              <div class="field-error">{{ form.username.errors.0 }}</div>
             {% endif %}
           </div>
           <div class="form-col">
@@ -313,7 +382,7 @@
               <span class="focus-border"></span>
             </div>
             {% if form.name.errors %}
-              <div class="text-danger small">{{ form.name.errors.0 }}</div>
+              <div class="field-error">{{ form.name.errors.0 }}</div>
             {% endif %}
           </div>
         </div>
@@ -324,7 +393,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.email.errors %}
-          <div class="text-danger small">{{ form.email.errors.0 }}</div>
+          <div class="field-error">{{ form.email.errors.0 }}</div>
         {% endif %}
 
         <div class="input-container">
@@ -333,7 +402,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.dob.errors %}
-          <div class="text-danger small">{{ form.dob.errors.0 }}</div>
+          <div class="field-error">{{ form.dob.errors.0 }}</div>
         {% endif %}
 
         <div class="radio-container">
@@ -343,17 +412,40 @@
           </div>
         </div>
         {% if form.gender.errors %}
-          <div class="text-danger small">{{ form.gender.errors.0 }}</div>
+          <div class="field-error">{{ form.gender.errors.0 }}</div>
         {% endif %}
 
         <div class="input-container">
           <i class="fa fa-address-book icon"></i>
-          {{ form.address }}
+          {{ form.address_line }}
           <span class="focus-border"></span>
         </div>
-        {% if form.address.errors %}
-          <div class="text-danger small">{{ form.address.errors.0 }}</div>
+        {% if form.address_line.errors %}
+          <div class="field-error">{{ form.address_line.errors.0 }}</div>
         {% endif %}
+
+        <div class="form-row">
+          <div class="form-col">
+            <div class="select-container">
+              <i class="fa fa-map-marker icon"></i>
+              {{ form.city }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.city.errors %}
+              <div class="field-error">{{ form.city.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="form-col">
+            <div class="select-container">
+              <i class="fa fa-map icon"></i>
+              {{ form.state }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.state.errors %}
+              <div class="field-error">{{ form.state.errors.0 }}</div>
+            {% endif %}
+          </div>
+        </div>
 
         <div class="input-container">
           <i class="fa fa-phone icon"></i>
@@ -361,7 +453,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.mobile_no.errors %}
-          <div class="text-danger small">{{ form.mobile_no.errors.0 }}</div>
+          <div class="field-error">{{ form.mobile_no.errors.0 }}</div>
         {% endif %}
       </div>
 
@@ -375,7 +467,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.registration_no.errors %}
-          <div class="text-danger small">{{ form.registration_no.errors.0 }}</div>
+          <div class="field-error">{{ form.registration_no.errors.0 }}</div>
         {% endif %}
 
         <div class="input-container">
@@ -384,7 +476,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.year_of_registration.errors %}
-          <div class="text-danger small">{{ form.year_of_registration.errors.0 }}</div>
+          <div class="field-error">{{ form.year_of_registration.errors.0 }}</div>
         {% endif %}
 
         <div class="input-container">
@@ -393,16 +485,16 @@
           <span class="focus-border"></span>
         </div>
         {% if form.qualification.errors %}
-          <div class="text-danger small">{{ form.qualification.errors.0 }}</div>
+          <div class="field-error">{{ form.qualification.errors.0 }}</div>
         {% endif %}
 
-        <div class="input-container">
+        <div class="select-container">
           <i class="fa fa-institution icon"></i>
           {{ form.State_Medical_Council }}
           <span class="focus-border"></span>
         </div>
         {% if form.State_Medical_Council.errors %}
-          <div class="text-danger small">{{ form.State_Medical_Council.errors.0 }}</div>
+          <div class="field-error">{{ form.State_Medical_Council.errors.0 }}</div>
         {% endif %}
 
         <div class="select-container">
@@ -410,7 +502,7 @@
           {{ form.specialization }}
         </div>
         {% if form.specialization.errors %}
-          <div class="text-danger small">{{ form.specialization.errors.0 }}</div>
+          <div class="field-error">{{ form.specialization.errors.0 }}</div>
         {% endif %}
       </div>
 
@@ -424,7 +516,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.password.errors %}
-          <div class="text-danger small">{{ form.password.errors.0 }}</div>
+          <div class="field-error">{{ form.password.errors.0 }}</div>
         {% endif %}
 
         <div class="input-container">
@@ -433,7 +525,7 @@
           <span class="focus-border"></span>
         </div>
         {% if form.password1.errors %}
-          <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+          <div class="field-error">{{ form.password1.errors.0 }}</div>
         {% endif %}
       </div>
 
@@ -452,115 +544,334 @@
 <script>
   // Professional doctor form validation and enhancements
   document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced form validation with real-time feedback
+    const validationRules = {
+      username: {
+        pattern: /^[a-zA-Z][a-zA-Z0-9]*$/,
+        minLength: 5,
+        maxLength: 20,
+        errorMessages: {
+          invalid: 'Username must start with a letter and can only contain letters and numbers. No spaces or symbols allowed.',
+          minLength: 'Username must be at least 5 characters long',
+          maxLength: 'Username cannot be more than 20 characters long',
+          startsWithLetter: 'Username must start with a letter'
+        }
+      },
+      password: {
+        minLength: 12,
+        hasUpper: /[A-Z]/,
+        hasLower: /[a-z]/,
+        hasDigit: /[0-9]/,
+        hasSpecial: /[!@#$%^&*(),.?":{}|<>_~`\-=+\[\]{};:|,./<>?]/,
+        noSequential: /(0123|1234|2345|3456|4567|5678|6789|7890|abcd|bcde|cdef|defg)/,
+        noCommon: /(password|admin|123|abc|qwerty|test|login)/,
+        noRepeats: /(.)\1\1\1/,
+        errorMessages: {
+          minLength: 'Password must be at least 12 characters long',
+          hasUpper: 'Password must contain at least one uppercase letter',
+          hasLower: 'Password must contain at least one lowercase letter',
+          hasDigit: 'Password must contain at least one digit',
+          hasSpecial: 'Password must contain at least one special character',
+          noSequential: 'Password cannot contain sequential characters like 1234 or abcd',
+          noCommon: 'Password contains common weak patterns',
+          noRepeats: 'Password cannot contain more than 3 repeated characters'
+        }
+      },
+      mobile: {
+        pattern: /^[6-9][0-9]{9}$/,
+        errorMessages: {
+          invalid: 'Mobile number must start with 6, 7, 8, or 9 and be 10 digits'
+        }
+      },
+      email: {
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        errorMessages: {
+          invalid: 'Please enter a valid email address'
+        }
+      }
+    };
+
+    // Enhanced field validation function
+    function validateField(field, ruleType) {
+      const rule = validationRules[ruleType];
+      if (!rule) return { isValid: true };
+      
+      const value = field.value.trim();
+      const errors = [];
+      
+      // Clear previous validation states
+      const inputContainer = field.closest('.input-container, .select-container');
+      if (inputContainer) {
+        inputContainer.classList.remove('error', 'success');
+      }
+      field.style.borderColor = '#FFB3B3';
+      field.setCustomValidity('');
+      
+      // Remove previous error message
+      const existingError = field.parentNode.querySelector('.validation-error');
+      if (existingError) {
+        existingError.remove();
+      }
+      
+      if (!value) {
+        return { isValid: true }; // Empty fields are handled by HTML5 required
+      }
+      
+      let isValid = true;
+      
+      // Username validation
+      if (ruleType === 'username') {
+        // Must start with a letter
+        if (!value || !value[0].match(/[a-zA-Z]/)) {
+          errors.push(rule.errorMessages.startsWithLetter);
+          isValid = false;
+        }
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+        if (value.length < rule.minLength) {
+          errors.push(rule.errorMessages.minLength);
+          isValid = false;
+        }
+        if (value.length > rule.maxLength) {
+          errors.push(rule.errorMessages.maxLength);
+          isValid = false;
+        }
+      }
+      
+      // Password validation
+      if (ruleType === 'password') {
+        if (value.length < rule.minLength) {
+          errors.push(rule.errorMessages.minLength);
+          isValid = false;
+        }
+        if (!rule.hasUpper.test(value)) {
+          errors.push(rule.errorMessages.hasUpper);
+          isValid = false;
+        }
+        if (!rule.hasLower.test(value)) {
+          errors.push(rule.errorMessages.hasLower);
+          isValid = false;
+        }
+        if (!rule.hasDigit.test(value)) {
+          errors.push(rule.errorMessages.hasDigit);
+          isValid = false;
+        }
+        if (!rule.hasSpecial.test(value)) {
+          errors.push(rule.errorMessages.hasSpecial);
+          isValid = false;
+        }
+        if (rule.noSequential.test(value.toLowerCase())) {
+          errors.push(rule.errorMessages.noSequential);
+          isValid = false;
+        }
+        if (rule.noCommon.test(value.toLowerCase())) {
+          errors.push(rule.errorMessages.noCommon);
+          isValid = false;
+        }
+        if (rule.noRepeats.test(value)) {
+          errors.push(rule.errorMessages.noRepeats);
+          isValid = false;
+        }
+      }
+      
+      // Mobile validation
+      if (ruleType === 'mobile') {
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+      }
+      
+      // Email validation
+      if (ruleType === 'email') {
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+      }
+      
+      // Update field appearance
+      if (isValid) {
+        if (inputContainer) {
+          inputContainer.classList.remove('error');
+          inputContainer.classList.add('success');
+        }
+        field.style.borderColor = '#28a745';
+      } else {
+        if (inputContainer) {
+          inputContainer.classList.remove('success');
+          inputContainer.classList.add('error');
+        }
+        field.style.borderColor = '#dc3545';
+        field.setCustomValidity(errors[0]);
+        
+        // Show error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'validation-error field-error';
+        errorDiv.textContent = errors[0];
+        field.parentNode.appendChild(errorDiv);
+      }
+      
+      return { isValid, errors };
+    }
+
     // Animate form fields on focus
-    const inputs = document.querySelectorAll('.input-field');
+    const inputs = document.querySelectorAll('.input-field, .select-field');
     inputs.forEach(input => {
       input.addEventListener('focus', function() {
         this.parentElement.style.transform = 'translateY(-2px)';
+        this.parentElement.style.boxShadow = '0 5px 20px rgba(142, 68, 173, 0.2)';
       });
       
       input.addEventListener('blur', function() {
         this.parentElement.style.transform = 'translateY(0)';
+        this.parentElement.style.boxShadow = '';
       });
     });
 
     // Enhanced password validation
     const password = document.querySelector('input[name="password"]');
     const password1 = document.querySelector('input[name="password1"]');
+    const usernameField = document.querySelector('input[name="username"]');
+    const emailField = document.querySelector('input[name="email"]');
     
     if (password && password1) {
-      password1.addEventListener('input', function() {
-        if (password.value !== this.value) {
-          this.setCustomValidity('Passwords do not match');
-          this.style.borderColor = '#ff6b6b';
-        } else {
-          this.setCustomValidity('');
-          this.style.borderColor = '#8E44AD';
+      password.addEventListener('input', function() {
+        validateField(this, 'password');
+        
+        // Check password similarity with username
+        if (usernameField && usernameField.value && this.value) {
+          const username = usernameField.value.toLowerCase();
+          const passwordVal = this.value.toLowerCase();
+          
+          if (username.length >= 3 && passwordVal.includes(username)) {
+            this.setCustomValidity('Password cannot contain your username');
+            const inputContainer = this.closest('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.add('error');
+              inputContainer.classList.remove('success');
+            }
+            this.style.borderColor = '#dc3545';
+            
+            let existingError = this.parentNode.querySelector('.validation-error');
+            if (!existingError) {
+              existingError = document.createElement('div');
+              existingError.className = 'validation-error field-error';
+              this.parentNode.appendChild(existingError);
+            }
+            existingError.textContent = 'Password cannot contain your username';
+          }
+        }
+        
+        // Check password similarity with email
+        if (emailField && emailField.value && this.value) {
+          const emailPrefix = emailField.value.toLowerCase().split('@')[0];
+          const passwordVal = this.value.toLowerCase();
+          
+          if (emailPrefix.length >= 3 && passwordVal.includes(emailPrefix)) {
+            this.setCustomValidity('Password cannot contain your email address');
+            const inputContainer = this.closest('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.add('error');
+              inputContainer.classList.remove('success');
+            }
+            this.style.borderColor = '#dc3545';
+            
+            let existingError = this.parentNode.querySelector('.validation-error');
+            if (!existingError) {
+              existingError = document.createElement('div');
+              existingError.className = 'validation-error field-error';
+              this.parentNode.appendChild(existingError);
+            }
+            existingError.textContent = 'Password cannot contain your email address';
+          }
+        }
+        
+        // Update password confirmation if it exists
+        if (password1.value) {
+          if (password.value !== password1.value) {
+            password1.style.borderColor = '#dc3545';
+            const inputContainer = password1.closest('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.add('error');
+              inputContainer.classList.remove('success');
+            }
+          } else {
+            password1.style.borderColor = '#28a745';
+            const inputContainer = password1.closest('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.remove('error');
+              inputContainer.classList.add('success');
+            }
+          }
         }
       });
-
-      password.addEventListener('input', function() {
-        if (password1.value && password.value !== password1.value) {
-          password1.style.borderColor = '#ff6b6b';
+      
+      password1.addEventListener('input', function() {
+        const inputContainer = this.closest('.input-container');
+        if (password.value !== this.value) {
+          this.setCustomValidity('Passwords do not match');
+          if (inputContainer) {
+            inputContainer.classList.add('error');
+            inputContainer.classList.remove('success');
+          }
+          this.style.borderColor = '#dc3545';
+          
+          let existingError = this.parentNode.querySelector('.validation-error');
+          if (!existingError) {
+            existingError = document.createElement('div');
+            existingError.className = 'validation-error field-error';
+            this.parentNode.appendChild(existingError);
+          }
+          existingError.textContent = 'Passwords do not match';
         } else {
-          password1.style.borderColor = '#8E44AD';
+          this.setCustomValidity('');
+          if (inputContainer) {
+            inputContainer.classList.remove('error');
+            inputContainer.classList.add('success');
+          }
+          this.style.borderColor = '#28a745';
+          
+          const existingError = this.parentNode.querySelector('.validation-error');
+          if (existingError) {
+            existingError.remove();
+          }
         }
       });
     }
 
-    // Enhanced phone number validation
+    // Real-time validation setup
+    const username = document.querySelector('input[name="username"]');
     const mobile = document.querySelector('input[name="mobile_no"]');
+    const email = document.querySelector('input[name="email"]');
+    
+    // Username real-time validation
+    if (username) {
+      username.addEventListener('input', function() {
+        validateField(this, 'username');
+      });
+    }
+    
+    // Mobile number real-time validation
     if (mobile) {
       mobile.addEventListener('input', function() {
+        // Clean input - only digits
         let value = this.value.replace(/\D/g, '');
         if (value.length > 10) {
           value = value.substring(0, 10);
         }
         this.value = value;
         
-        // Real-time validation feedback
-        if (value.length === 10) {
-          const validPrefix = ['6', '7', '8', '9'];
-          if (validPrefix.includes(value[0])) {
-            this.style.borderColor = '#28a745';
-            this.setCustomValidity('');
-          } else {
-            this.style.borderColor = '#dc3545';
-            this.setCustomValidity('Mobile number must start with 6, 7, 8, or 9');
-          }
-        } else if (value.length > 0) {
-          this.style.borderColor = '#ffc107';
-          this.setCustomValidity('Mobile number must be exactly 10 digits');
-        } else {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        }
+        validateField(this, 'mobile');
       });
     }
-
-    // Username validation
-    const username = document.querySelector('input[name="username"]');
-    if (username) {
-      username.addEventListener('input', function() {
-        const value = this.value;
-        const isValid = /^[a-zA-Z0-9_]+$/.test(value) && value.length >= 3 && value.length <= 30;
-        
-        if (value.length === 0) {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        } else if (isValid) {
-          this.style.borderColor = '#28a745';
-          this.setCustomValidity('');
-        } else {
-          this.style.borderColor = '#dc3545';
-          if (value.length < 3) {
-            this.setCustomValidity('Username must be at least 3 characters long');
-          } else if (value.length > 30) {
-            this.setCustomValidity('Username cannot be more than 30 characters long');
-          } else {
-            this.setCustomValidity('Username can only contain letters, numbers, and underscores');
-          }
-        }
-      });
-    }
-
-    // Email validation
-    const email = document.querySelector('input[name="email"]');
+    
+    // Email real-time validation
     if (email) {
       email.addEventListener('input', function() {
-        const value = this.value;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        
-        if (value.length === 0) {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        } else if (emailRegex.test(value)) {
-          this.style.borderColor = '#28a745';
-          this.setCustomValidity('');
-        } else {
-          this.style.borderColor = '#dc3545';
-          this.setCustomValidity('Please enter a valid email address');
-        }
+        validateField(this, 'email');
       });
     }
 
@@ -630,31 +941,99 @@
       yor.addEventListener('input', validateDates);
     }
 
-    // Real-time form submission prevention if invalid
+    // Enhanced form submission validation
     const form = document.querySelector('form');
     if (form) {
       form.addEventListener('submit', function(e) {
         const inputs = this.querySelectorAll('input[required], select[required]');
         let isValid = true;
+        let firstInvalid = null;
         
+        // Validate all fields
         inputs.forEach(input => {
+          // Run custom validation
+          if (input.name === 'username' && username) {
+            const result = validateField(input, 'username');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'password' && password) {
+            const result = validateField(input, 'password');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'mobile_no' && mobile) {
+            const result = validateField(input, 'mobile');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'email' && email) {
+            const result = validateField(input, 'email');
+            if (!result.isValid) isValid = false;
+          }
+          
+          // Check HTML5 validity
           if (!input.checkValidity()) {
             isValid = false;
+            const inputContainer = input.closest('.input-container, .select-container');
+            if (inputContainer) {
+              inputContainer.classList.add('error');
+            }
             input.style.borderColor = '#dc3545';
+            if (!firstInvalid) firstInvalid = input;
           }
         });
         
         if (!isValid) {
           e.preventDefault();
+          
           // Scroll to first invalid field
-          const firstInvalid = this.querySelector('input:invalid, select:invalid');
           if (firstInvalid) {
             firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            firstInvalid.focus();
+            setTimeout(() => firstInvalid.focus(), 300);
+          }
+          
+          // Show summary message
+          const summaryDiv = document.createElement('div');
+          summaryDiv.className = 'alert';
+          summaryDiv.style.cssText = 'margin-bottom: 20px; border-radius: 10px;';
+          summaryDiv.innerHTML = '<h3>Please fix the following errors:</h3><p>• Check highlighted fields for validation errors</p>';
+          
+          const formContainer = form.parentNode;
+          const existingAlert = formContainer.querySelector('.alert:not(.summary-alert)');
+          if (!existingAlert || existingAlert.textContent.indexOf('Please fix') === -1) {
+            formContainer.insertBefore(summaryDiv, form);
+            summaryDiv.classList.add('summary-alert');
+            
+            // Remove summary after 5 seconds
+            setTimeout(() => {
+              if (summaryDiv.parentNode) {
+                summaryDiv.remove();
+              }
+            }, 5000);
           }
         }
       });
     }
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .validation-error {
+        animation: fadeIn 0.3s ease;
+      }
+      
+      .input-field:focus,
+      .select-field:focus {
+        animation: focusPulse 0.3s ease;
+      }
+      
+      @keyframes focusPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
   });
 </script>
 

@@ -815,20 +815,12 @@ def  consult_a_doctor(request):
         if not request.user.is_authenticated:
             return redirect('home')
         
-        # Get doctortype from session if available, otherwise show all doctors
-        doctortype = request.session.get('doctortype', None)
-        print(f"Doctor type from session: {doctortype}")
+        # Only show Dermatologists (skin-related doctors)
+        dobj = doctor.objects.filter(specialization__iexact='Dermatologist')
         
-        # Get all doctors, or filter by specialization if doctortype is set
-        if doctortype and doctortype != 'other':
-            # Try to filter by specialization (case-insensitive)
-            dobj = doctor.objects.filter(specialization__icontains=doctortype)
-            # If no doctors found with that specialization, show all
-            if not dobj.exists():
-                dobj = doctor.objects.all()
-        else:
-            # Show all doctors if no doctortype or if it's 'other'
-            dobj = doctor.objects.all()
+        # If no dermatologists found, return empty queryset
+        if not dobj.exists():
+            dobj = doctor.objects.none()
 
         return render(request,'patient/consult_a_doctor/consult_a_doctor.html',{"dobj":dobj})
 

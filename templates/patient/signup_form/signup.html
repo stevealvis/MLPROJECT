@@ -130,16 +130,78 @@
 
   .alert {
     background: linear-gradient(45deg, #FFE5E5, #FFF0F0);
-    border: 2px solid #FFB3B3;
+    border: 2px solid #FF6B6B;
     border-radius: 15px;
-    padding: 15px;
+    padding: 15px 20px;
     margin-bottom: 25px;
+    animation: shake 0.5s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
   }
 
   .alert h3 {
     color: #FF6B6B;
     margin: 0;
     font-weight: 600;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alert h3::before {
+    content: "⚠️";
+    font-size: 1.2rem;
+  }
+
+  .field-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 5px;
+    margin-left: 50px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    animation: fadeInError 0.3s ease;
+    font-weight: 500;
+  }
+
+  .field-error::before {
+    content: "✗";
+    font-size: 0.9rem;
+  }
+
+  .input-container.error {
+    border-color: #dc3545;
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.3);
+    animation: shakeField 0.3s ease;
+  }
+
+  .input-container.success {
+    border-color: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2);
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+  }
+
+  @keyframes shakeField {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  @keyframes fadeInError {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .form-row {
@@ -252,7 +314,7 @@
             <span class="focus-border"></span>
           </div>
           {% if form.username.errors %}
-            <div class="text-danger small">{{ form.username.errors.0 }}</div>
+            <div class="field-error">{{ form.username.errors.0 }}</div>
           {% endif %}
         </div>
         <div class="form-col">
@@ -262,7 +324,7 @@
             <span class="focus-border"></span>
           </div>
           {% if form.name.errors %}
-            <div class="text-danger small">{{ form.name.errors.0 }}</div>
+            <div class="field-error">{{ form.name.errors.0 }}</div>
           {% endif %}
         </div>
       </div>
@@ -273,7 +335,7 @@
         <span class="focus-border"></span>
       </div>
       {% if form.email.errors %}
-        <div class="text-danger small">{{ form.email.errors.0 }}</div>
+        <div class="field-error">{{ form.email.errors.0 }}</div>
       {% endif %}
 
       <div class="form-row">
@@ -284,7 +346,7 @@
             <span class="focus-border"></span>
           </div>
           {% if form.dob.errors %}
-            <div class="text-danger small">{{ form.dob.errors.0 }}</div>
+            <div class="field-error">{{ form.dob.errors.0 }}</div>
           {% endif %}
         </div>
         <div class="form-col">
@@ -294,7 +356,7 @@
             <span class="focus-border"></span>
           </div>
           {% if form.age.errors %}
-            <div class="text-danger small">{{ form.age.errors.0 }}</div>
+            <div class="field-error">{{ form.age.errors.0 }}</div>
           {% endif %}
         </div>
       </div>
@@ -306,17 +368,40 @@
         </div>
       </div>
       {% if form.gender.errors %}
-        <div class="text-danger small">{{ form.gender.errors.0 }}</div>
+        <div class="field-error">{{ form.gender.errors.0 }}</div>
       {% endif %}
 
       <div class="input-container">
         <i class="fa fa-address-book icon"></i>
-        {{ form.address }}
+        {{ form.address_line }}
         <span class="focus-border"></span>
       </div>
-      {% if form.address.errors %}
-        <div class="text-danger small">{{ form.address.errors.0 }}</div>
+      {% if form.address_line.errors %}
+        <div class="field-error">{{ form.address_line.errors.0 }}</div>
       {% endif %}
+
+      <div class="form-row">
+        <div class="form-col">
+          <div class="select-container">
+            <i class="fa fa-map-marker icon"></i>
+            {{ form.city }}
+            <span class="focus-border"></span>
+          </div>
+          {% if form.city.errors %}
+            <div class="field-error">{{ form.city.errors.0 }}</div>
+          {% endif %}
+        </div>
+        <div class="form-col">
+          <div class="select-container">
+            <i class="fa fa-map icon"></i>
+            {{ form.state }}
+            <span class="focus-border"></span>
+          </div>
+          {% if form.state.errors %}
+            <div class="field-error">{{ form.state.errors.0 }}</div>
+          {% endif %}
+        </div>
+      </div>
 
       <div class="input-container">
         <i class="fa fa-phone icon"></i>
@@ -324,7 +409,7 @@
         <span class="focus-border"></span>
       </div>
       {% if form.mobile_no.errors %}
-        <div class="text-danger small">{{ form.mobile_no.errors.0 }}</div>
+        <div class="field-error">{{ form.mobile_no.errors.0 }}</div>
       {% endif %}
 
       <div class="input-container">
@@ -333,7 +418,7 @@
         <span class="focus-border"></span>
       </div>
       {% if form.password.errors %}
-        <div class="text-danger small">{{ form.password.errors.0 }}</div>
+        <div class="field-error">{{ form.password.errors.0 }}</div>
       {% endif %}
 
       <div class="input-container">
@@ -342,7 +427,7 @@
         <span class="focus-border"></span>
       </div>
       {% if form.password1.errors %}
-        <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+        <div class="field-error">{{ form.password1.errors.0 }}</div>
       {% endif %}
 
       <button type="submit" class="btn submit-btn">
@@ -363,13 +448,14 @@
     // Enhanced form validation with real-time feedback
     const validationRules = {
       username: {
-        pattern: /^[a-zA-Z0-9_]+$/,
-        minLength: 3,
-        maxLength: 30,
+        pattern: /^[a-zA-Z][a-zA-Z0-9]*$/,
+        minLength: 5,
+        maxLength: 20,
         errorMessages: {
-          invalid: 'Username can only contain letters, numbers, and underscores',
-          minLength: 'Username must be at least 3 characters long',
-          maxLength: 'Username cannot be more than 30 characters long'
+          invalid: 'Username must start with a letter and can only contain letters and numbers. No spaces or symbols allowed.',
+          minLength: 'Username must be at least 5 characters long',
+          maxLength: 'Username cannot be more than 20 characters long',
+          startsWithLetter: 'Username must start with a letter'
         }
       },
       password: {
@@ -415,6 +501,10 @@
       const errors = [];
       
       // Clear previous validation states
+      const inputContainer = field.closest('.input-container');
+      if (inputContainer) {
+        inputContainer.classList.remove('error', 'success');
+      }
       field.style.borderColor = '#FFB3B3';
       field.setCustomValidity('');
       
@@ -432,6 +522,11 @@
       
       // Username validation
       if (ruleType === 'username') {
+        // Must start with a letter
+        if (!value || !value[0].match(/[a-zA-Z]/)) {
+          errors.push(rule.errorMessages.startsWithLetter);
+          isValid = false;
+        }
         if (!rule.pattern.test(value)) {
           errors.push(rule.errorMessages.invalid);
           isValid = false;
@@ -499,16 +594,24 @@
       }
       
       // Update field appearance
+      const inputContainer = field.closest('.input-container');
       if (isValid) {
+        if (inputContainer) {
+          inputContainer.classList.remove('error');
+          inputContainer.classList.add('success');
+        }
         field.style.borderColor = '#28a745';
       } else {
+        if (inputContainer) {
+          inputContainer.classList.remove('success');
+          inputContainer.classList.add('error');
+        }
         field.style.borderColor = '#dc3545';
         field.setCustomValidity(errors[0]);
         
         // Show error message
         const errorDiv = document.createElement('div');
-        errorDiv.className = 'validation-error';
-        errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+        errorDiv.className = 'validation-error field-error';
         errorDiv.textContent = errors[0];
         field.parentNode.appendChild(errorDiv);
       }
@@ -558,13 +661,21 @@
           
           if (username.length >= 3 && password.includes(username)) {
             this.setCustomValidity('Password cannot contain your username');
+            const inputContainer = this.closest('.input-container');
+            if (inputContainer) {
+              inputContainer.classList.add('error');
+              inputContainer.classList.remove('success');
+            }
             this.style.borderColor = '#dc3545';
             
             // Show similarity error
-            const existingError = this.parentNode.querySelector('.validation-error');
-            if (existingError) {
-              existingError.textContent = 'Password cannot contain your username';
+            let existingError = this.parentNode.querySelector('.validation-error');
+            if (!existingError) {
+              existingError = document.createElement('div');
+              existingError.className = 'validation-error field-error';
+              this.parentNode.appendChild(existingError);
             }
+            existingError.textContent = 'Password cannot contain your username';
           }
         }
       });
@@ -573,17 +684,29 @@
     // Password confirmation validation
     if (password1Field && passwordField) {
       password1Field.addEventListener('input', function() {
+        const inputContainer = this.closest('.input-container');
         if (passwordField.value !== this.value) {
           this.setCustomValidity('Passwords do not match');
+          if (inputContainer) {
+            inputContainer.classList.add('error');
+            inputContainer.classList.remove('success');
+          }
           this.style.borderColor = '#dc3545';
           
           // Show mismatch error
-          const existingError = this.parentNode.querySelector('.validation-error');
-          if (existingError) {
-            existingError.textContent = 'Passwords do not match';
+          let existingError = this.parentNode.querySelector('.validation-error');
+          if (!existingError) {
+            existingError = document.createElement('div');
+            existingError.className = 'validation-error field-error';
+            this.parentNode.appendChild(existingError);
           }
+          existingError.textContent = 'Passwords do not match';
         } else {
           this.setCustomValidity('');
+          if (inputContainer) {
+            inputContainer.classList.remove('error');
+            inputContainer.classList.add('success');
+          }
           this.style.borderColor = '#28a745';
           
           // Remove error message
