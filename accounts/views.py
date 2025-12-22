@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User , auth
 from main_app.models import patient , doctor
 from datetime import datetime
+from .forms import PatientSignupForm, DoctorSignupForm, PatientProfileUpdateForm, DoctorProfileUpdateForm
 
 # Create your views here.
 
@@ -58,55 +59,50 @@ def sign_in_admin(request):
 
 
 def signup_patient(request):
-
-
+    """Professional patient signup with comprehensive validation"""
+    
     if request.method == 'POST':
-      
-      if request.POST['username'] and request.POST['email'] and  request.POST['name'] and request.POST['dob'] and request.POST['gender'] and request.POST['address']and request.POST['mobile']and request.POST['password']and request.POST['password1'] and request.POST['age'] :
-
-          username =  request.POST['username']
-          email =  request.POST['email']
-
-          name =  request.POST['name']
-          dob =  request.POST['dob']
-          age = request.POST['age']
-          gender =  request.POST['gender']
-          address =  request.POST['address']
-          mobile_no = request.POST['mobile']
-          password =  request.POST.get('password')
-          password1 =  request.POST.get('password1')
-
-          if password == password1:
-              if User.objects.filter(username = username).exists():
-                messages.info(request,'username already taken')
-                return redirect('signup_patient')
-
-              elif User.objects.filter(email = email).exists():
-                messages.info(request,'email already taken')
-                return redirect('signup_patient')
-                
-              else :
-                user = User.objects.create_user(username=username,password=password,email=email)   
+        form = PatientSignupForm(request.POST)
+        if form.is_valid():
+            try:
+                # Create user
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password'],
+                    email=form.cleaned_data['email']
+                )
                 user.save()
                 
-                patientnew = patient(user=user,name=name,dob=dob,gender=gender,address=address,mobile_no=mobile_no)
-                patientnew.save()
-                messages.info(request,'user created sucessfully')
+                # Parse DOB
+                dob_date = form.cleaned_data['dob']
                 
-              return redirect('sign_in_patient')
-
-          else:
-            messages.info(request,'password not matching, please try again')
-            return redirect('signup_patient')
-
-      else :
-        messages.info(request,'Please make sure all required fields are filled out correctly')
-        return redirect('signup_patient') 
-
-
+                # Create patient profile
+                patientnew = patient(
+                    user=user,
+                    name=form.cleaned_data['name'],
+                    dob=dob_date,
+                    gender=form.cleaned_data['gender'],
+                    address=form.cleaned_data['address'],
+                    mobile_no=form.cleaned_data['mobile_no']
+                )
+                patientnew.save()
+                
+                messages.success(request, 'Patient account created successfully! Please sign in with your credentials.')
+                return redirect('sign_in_patient')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating account: {str(e)}. Please try again.')
+                return render(request, 'patient/signup_form/signup.html', {'form': form})
+        else:
+            # Form has errors, display them
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field.title()}: {error}')
+            return render(request, 'patient/signup_form/signup.html', {'form': form})
     
-    else :
-      return render(request,'patient/signup_form/signup.html')
+    else:
+        form = PatientSignupForm()
+        return render(request, 'patient/signup_form/signup.html', {'form': form})
 
 
 
@@ -144,22 +140,42 @@ def sign_in_patient(request):
       return render(request,'patient/signin_page/index.html')
 
 
-def savepdata(request,patientusername):
-
-  if request.method == 'POST':
-    name =  request.POST['name']
-    dob =  request.POST['dob']
-    gender =  request.POST['gender']
-    address =  request.POST['address']
-    mobile_no = request.POST['mobile_no']
-    print(dob)
-    dobdate = datetime.strptime(dob,'%Y-%m-%d')
-
-    puser = User.objects.get(username=patientusername)
-
-    patient.objects.filter(pk=puser.patient).update(name=name,dob=dobdate,gender=gender,address=address,mobile_no=mobile_no)
-
-    return redirect('pviewprofile',patientusername)
+def savepdata(request, patientusername):
+    """Professional patient profile update with validation"""
+    
+    if request.method == 'POST':
+        puser = User.objects.get(username=patientusername)
+        patient_profile = puser.patient
+        
+        form = PatientProfileUpdateForm(request.POST)
+        if form.is_valid():
+            try:
+                # Parse DOB
+                dob_date = form.cleaned_data['dob']
+                
+                # Update patient profile
+                patient.objects.filter(pk=puser.patient).update(
+                    name=form.cleaned_data['name'],
+                    dob=dob_date,
+                    gender=form.cleaned_data['gender'],
+                    address=form.cleaned_data['address'],
+                    mobile_no=form.cleaned_data['mobile_no']
+                )
+                
+                messages.success(request, 'Profile updated successfully!')
+                return redirect('pviewprofile', patientusername)
+                
+            except Exception as e:
+                messages.error(request, f'Error updating profile: {str(e)}. Please try again.')
+                return redirect('pviewprofile', patientusername)
+        else:
+            # Form has errors, display them
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field.title()}: {error}')
+            return redirect('pviewprofile', patientusername)
+    else:
+        return redirect('pviewprofile', patientusername)
 
 
 
@@ -169,60 +185,58 @@ def savepdata(request,patientusername):
     
 
 def signup_doctor(request):
-
-    if request.method == 'GET':
+    """Professional doctor signup with comprehensive validation"""
     
-       return render(request,'doctor/signup_form/signup.html')
-
+    if request.method == 'GET':
+        form = DoctorSignupForm()
+        return render(request, 'doctor/signup_form/signup.html', {'form': form})
 
     if request.method == 'POST':
-      
-      if request.POST['username'] and request.POST['email'] and  request.POST['name'] and request.POST['dob'] and request.POST['gender'] and request.POST['address']and request.POST['mobile'] and request.POST['password']and request.POST['password1']  and  request.POST['registration_no'] and  request.POST['year_of_registration'] and  request.POST['qualification'] and  request.POST['State_Medical_Council'] and  request.POST['specialization'] :
-
-          username =  request.POST['username']
-          email =  request.POST['email']
-
-          name =  request.POST['name']
-          dob =  request.POST['dob']
-          gender =  request.POST['gender']
-          address =  request.POST['address']
-          mobile_no = request.POST['mobile']
-          registration_no =  request.POST['registration_no']
-          year_of_registration =  request.POST['year_of_registration']
-          qualification =  request.POST['qualification']
-          State_Medical_Council =  request.POST['State_Medical_Council']
-          specialization =  request.POST['specialization']
-          
-          password =  request.POST.get('password')
-          password1 =  request.POST.get('password1')
-
-          if password == password1:
-              if User.objects.filter(username = username).exists():
-                messages.info(request,'username already taken')
-                return redirect('signup_doctor')
-
-              elif User.objects.filter(email = email).exists():
-                messages.info(request,'email already taken')
-                return redirect('signup_doctor')
-                
-              else :
-                user = User.objects.create_user(username=username,password=password,email=email)   
+        form = DoctorSignupForm(request.POST)
+        if form.is_valid():
+            try:
+                # Create user
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    password=form.cleaned_data['password'],
+                    email=form.cleaned_data['email']
+                )
                 user.save()
                 
-                doctornew = doctor( user=user, name=name, dob=dob, gender=gender, address=address, mobile_no=mobile_no, registration_no=registration_no, year_of_registration=year_of_registration, qualification=qualification, State_Medical_Council=State_Medical_Council, specialization=specialization )
-                doctornew.save()
-                messages.info(request,'user created sucessfully')
-                print("doctorcreated")
+                # Parse dates
+                dob_date = form.cleaned_data['dob']
+                yor_date = form.cleaned_data['year_of_registration']
                 
-              return redirect('sign_in_doctor')
+                # Create doctor profile
+                doctornew = doctor(
+                    user=user,
+                    name=form.cleaned_data['name'],
+                    dob=dob_date,
+                    gender=form.cleaned_data['gender'],
+                    address=form.cleaned_data['address'],
+                    mobile_no=form.cleaned_data['mobile_no'],
+                    registration_no=form.cleaned_data['registration_no'],
+                    year_of_registration=yor_date,
+                    qualification=form.cleaned_data['qualification'],
+                    State_Medical_Council=form.cleaned_data['State_Medical_Council'],
+                    specialization=form.cleaned_data['specialization']
+                )
+                doctornew.save()
+                
+                messages.success(request, 'Doctor account created successfully! Please sign in with your credentials.')
+                return redirect('sign_in_doctor')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating account: {str(e)}. Please try again.')
+                return render(request, 'doctor/signup_form/signup.html', {'form': form})
+        else:
+            # Form has errors, display them
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field.title()}: {error}')
+            return render(request, 'doctor/signup_form/signup.html', {'form': form})
 
-          else:
-            messages.info(request,'password not matching, please try again')
-            return redirect('signup_doctor')
 
-      else :
-        messages.info(request,'Please make sure all required fields are filled out correctly')
-        return redirect('signup_doctor') 
 
 
 
@@ -270,29 +284,46 @@ def sign_in_doctor(request):
 
 
 
-def saveddata(request,doctorusername):
-
-  if request.method == 'POST':
-
-    name =  request.POST['name']
-    dob =  request.POST['dob']
-    gender =  request.POST['gender']
-    address =  request.POST['address']
-    mobile_no = request.POST['mobile_no']
-    registration_no =  request.POST['registration_no']
-    year_of_registration =  request.POST['year_of_registration']
-    qualification =  request.POST['qualification']
-    State_Medical_Council =  request.POST['State_Medical_Council']
-    specialization =  request.POST['specialization']
+def saveddata(request, doctorusername):
+    """Professional doctor profile update with validation"""
     
-
-    
-    dobdate = datetime.strptime(dob,'%Y-%m-%d')
-    yor = datetime.strptime(year_of_registration,'%Y-%m-%d')
-
-    duser = User.objects.get(username=doctorusername)
-
-    doctor.objects.filter(pk=duser.doctor).update( name=name, dob=dob, gender=gender, address=address, mobile_no=mobile_no, registration_no=registration_no, year_of_registration=yor, qualification=qualification, State_Medical_Council=State_Medical_Council, specialization=specialization )
-
-    return redirect('dviewprofile',doctorusername)
+    if request.method == 'POST':
+        duser = User.objects.get(username=doctorusername)
+        doctor_profile = duser.doctor
+        
+        form = DoctorProfileUpdateForm(request.POST)
+        if form.is_valid():
+            try:
+                # Parse dates
+                dob_date = form.cleaned_data['dob']
+                yor_date = form.cleaned_data['year_of_registration']
+                
+                # Update doctor profile
+                doctor.objects.filter(pk=duser.doctor).update(
+                    name=form.cleaned_data['name'],
+                    dob=dob_date,
+                    gender=form.cleaned_data['gender'],
+                    address=form.cleaned_data['address'],
+                    mobile_no=form.cleaned_data['mobile_no'],
+                    registration_no=form.cleaned_data['registration_no'],
+                    year_of_registration=yor_date,
+                    qualification=form.cleaned_data['qualification'],
+                    State_Medical_Council=form.cleaned_data['State_Medical_Council'],
+                    specialization=form.cleaned_data['specialization']
+                )
+                
+                messages.success(request, 'Profile updated successfully!')
+                return redirect('dviewprofile', doctorusername)
+                
+            except Exception as e:
+                messages.error(request, f'Error updating profile: {str(e)}. Please try again.')
+                return redirect('dviewprofile', doctorusername)
+        else:
+            # Form has errors, display them
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field.title()}: {error}')
+            return redirect('dviewprofile', doctorusername)
+    else:
+        return redirect('dviewprofile', doctorusername)
 

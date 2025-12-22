@@ -248,80 +248,102 @@
         <div class="form-col">
           <div class="input-container">
             <i class="fa fa-user icon"></i>
-            <input class="input-field" type="text" placeholder="Username" name="username" required>
+            {{ form.username }}
             <span class="focus-border"></span>
           </div>
+          {% if form.username.errors %}
+            <div class="text-danger small">{{ form.username.errors.0 }}</div>
+          {% endif %}
         </div>
         <div class="form-col">
           <div class="input-container">
             <i class="fa fa-user icon"></i>
-            <input class="input-field" type="text" placeholder="Full Name" name="name" required>
+            {{ form.name }}
             <span class="focus-border"></span>
           </div>
+          {% if form.name.errors %}
+            <div class="text-danger small">{{ form.name.errors.0 }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="input-container">
         <i class="fa fa-envelope icon"></i>
-        <input class="input-field" type="email" placeholder="Email Address" name="email" required>
+        {{ form.email }}
         <span class="focus-border"></span>
       </div>
+      {% if form.email.errors %}
+        <div class="text-danger small">{{ form.email.errors.0 }}</div>
+      {% endif %}
 
       <div class="form-row">
         <div class="form-col">
           <div class="input-container">
             <i class="fa fa-calendar icon"></i>
-            <input class="input-field" type="date" name="dob" required>
+            {{ form.dob }}
             <span class="focus-border"></span>
           </div>
+          {% if form.dob.errors %}
+            <div class="text-danger small">{{ form.dob.errors.0 }}</div>
+          {% endif %}
         </div>
         <div class="form-col">
           <div class="input-container">
             <i class="fa fa-birthday-cake icon"></i>
-            <input class="input-field" type="number" placeholder="Age" name="age" min="1" max="120" required>
+            {{ form.age }}
             <span class="focus-border"></span>
           </div>
+          {% if form.age.errors %}
+            <div class="text-danger small">{{ form.age.errors.0 }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="radio-container">
         <i class="fa fa-venus-mars icon"></i>
         <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-          <label class="radio-label">
-            <input class="radio-btn" type="radio" name="gender" value="male" checked> Male
-          </label>
-          <label class="radio-label">
-            <input class="radio-btn" type="radio" name="gender" value="female"> Female
-          </label>
-          <label class="radio-label">
-            <input class="radio-btn" type="radio" name="gender" value="other"> Other
-          </label>
+          {{ form.gender }}
         </div>
       </div>
+      {% if form.gender.errors %}
+        <div class="text-danger small">{{ form.gender.errors.0 }}</div>
+      {% endif %}
 
       <div class="input-container">
         <i class="fa fa-address-book icon"></i>
-        <input class="input-field" type="text" placeholder="Complete Address" name="address" required>
+        {{ form.address }}
         <span class="focus-border"></span>
       </div>
+      {% if form.address.errors %}
+        <div class="text-danger small">{{ form.address.errors.0 }}</div>
+      {% endif %}
 
       <div class="input-container">
         <i class="fa fa-phone icon"></i>
-        <input class="input-field" type="tel" placeholder="Mobile Number" name="mobile" required>
+        {{ form.mobile_no }}
         <span class="focus-border"></span>
       </div>
+      {% if form.mobile_no.errors %}
+        <div class="text-danger small">{{ form.mobile_no.errors.0 }}</div>
+      {% endif %}
 
       <div class="input-container">
         <i class="fa fa-lock icon"></i>
-        <input class="input-field" type="password" placeholder="Password" name="password" required>
+        {{ form.password }}
         <span class="focus-border"></span>
       </div>
+      {% if form.password.errors %}
+        <div class="text-danger small">{{ form.password.errors.0 }}</div>
+      {% endif %}
 
       <div class="input-container">
         <i class="fa fa-check-circle icon"></i>
-        <input class="input-field" type="password" placeholder="Confirm Password" name="password1" required>
+        {{ form.password1 }}
         <span class="focus-border"></span>
       </div>
+      {% if form.password1.errors %}
+        <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+      {% endif %}
 
       <button type="submit" class="btn submit-btn">
         <i class="fa fa-user-plus"></i> Register Account
@@ -336,7 +358,7 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 
 <script>
-  // Add smooth animations and form enhancements
+  // Professional form validation and enhancements
   document.addEventListener('DOMContentLoaded', function() {
     // Animate form fields on focus
     const inputs = document.querySelectorAll('.input-field');
@@ -350,7 +372,7 @@
       });
     });
 
-    // Password confirmation validation
+    // Enhanced password validation
     const password = document.querySelector('input[name="password"]');
     const password1 = document.querySelector('input[name="password1"]');
     
@@ -358,14 +380,24 @@
       password1.addEventListener('input', function() {
         if (password.value !== this.value) {
           this.setCustomValidity('Passwords do not match');
+          this.style.borderColor = '#ff6b6b';
         } else {
           this.setCustomValidity('');
+          this.style.borderColor = '#8E44AD';
+        }
+      });
+
+      password.addEventListener('input', function() {
+        if (password1.value && password.value !== password1.value) {
+          password1.style.borderColor = '#ff6b6b';
+        } else {
+          password1.style.borderColor = '#8E44AD';
         }
       });
     }
 
-    // Phone number formatting
-    const mobile = document.querySelector('input[name="mobile"]');
+    // Enhanced phone number validation
+    const mobile = document.querySelector('input[name="mobile_no"]');
     if (mobile) {
       mobile.addEventListener('input', function() {
         let value = this.value.replace(/\D/g, '');
@@ -373,6 +405,128 @@
           value = value.substring(0, 10);
         }
         this.value = value;
+        
+        // Real-time validation feedback
+        if (value.length === 10) {
+          const validPrefix = ['6', '7', '8', '9'];
+          if (validPrefix.includes(value[0])) {
+            this.style.borderColor = '#28a745';
+            this.setCustomValidity('');
+          } else {
+            this.style.borderColor = '#dc3545';
+            this.setCustomValidity('Mobile number must start with 6, 7, 8, or 9');
+          }
+        } else if (value.length > 0) {
+          this.style.borderColor = '#ffc107';
+          this.setCustomValidity('Mobile number must be exactly 10 digits');
+        } else {
+          this.style.borderColor = '#FFB3B3';
+          this.setCustomValidity('');
+        }
+      });
+    }
+
+    // Username validation
+    const username = document.querySelector('input[name="username"]');
+    if (username) {
+      username.addEventListener('input', function() {
+        const value = this.value;
+        const isValid = /^[a-zA-Z0-9_]+$/.test(value) && value.length >= 3 && value.length <= 30;
+        
+        if (value.length === 0) {
+          this.style.borderColor = '#FFB3B3';
+          this.setCustomValidity('');
+        } else if (isValid) {
+          this.style.borderColor = '#28a745';
+          this.setCustomValidity('');
+        } else {
+          this.style.borderColor = '#dc3545';
+          if (value.length < 3) {
+            this.setCustomValidity('Username must be at least 3 characters long');
+          } else if (value.length > 30) {
+            this.setCustomValidity('Username cannot be more than 30 characters long');
+          } else {
+            this.setCustomValidity('Username can only contain letters, numbers, and underscores');
+          }
+        }
+      });
+    }
+
+    // Email validation
+    const email = document.querySelector('input[name="email"]');
+    if (email) {
+      email.addEventListener('input', function() {
+        const value = this.value;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (value.length === 0) {
+          this.style.borderColor = '#FFB3B3';
+          this.setCustomValidity('');
+        } else if (emailRegex.test(value)) {
+          this.style.borderColor = '#28a745';
+          this.setCustomValidity('');
+        } else {
+          this.style.borderColor = '#dc3545';
+          this.setCustomValidity('Please enter a valid email address');
+        }
+      });
+    }
+
+    // Age and DOB validation
+    const age = document.querySelector('input[name="age"]');
+    const dob = document.querySelector('input[name="dob"]');
+    
+    if (age && dob) {
+      const validateAge = () => {
+        const ageValue = parseInt(age.value);
+        const dobValue = new Date(dob.value);
+        
+        if (ageValue && dobValue) {
+          const today = new Date();
+          const calculatedAge = today.getFullYear() - dobValue.getFullYear();
+          const monthDiff = today.getMonth() - dobValue.getMonth();
+          
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobValue.getDate())) {
+            calculatedAge--;
+          }
+          
+          if (Math.abs(ageValue - calculatedAge) <= 1) {
+            age.style.borderColor = '#28a745';
+            dob.style.borderColor = '#28a745';
+          } else {
+            age.style.borderColor = '#dc3545';
+            dob.style.borderColor = '#dc3545';
+          }
+        }
+      };
+      
+      age.addEventListener('input', validateAge);
+      dob.addEventListener('input', validateAge);
+    }
+
+    // Real-time form submission prevention if invalid
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const inputs = this.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+        
+        inputs.forEach(input => {
+          if (!input.checkValidity()) {
+            isValid = false;
+            input.style.borderColor = '#dc3545';
+          }
+        });
+        
+        if (!isValid) {
+          e.preventDefault();
+          // Scroll to first invalid field
+          const firstInvalid = this.querySelector('input:invalid, select:invalid');
+          if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            firstInvalid.focus();
+          }
+        }
       });
     }
   });
