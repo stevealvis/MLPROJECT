@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, EmailValidator, MinLengthValidator, MaxLengthValidator
 from django.contrib.auth.models import User
 from django.utils.html import escape
+from .models import Patient, Doctor, UserProfile
 import re
 import html
 from datetime import date

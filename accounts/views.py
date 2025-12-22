@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib import messages
 from django.contrib.auth.models import User , auth
-from main_app.models import patient , doctor
+from .models import Patient, Doctor, UserProfile, MedicalRecord, Appointment
 from datetime import datetime
 from .forms import PatientSignupForm, DoctorSignupForm, PatientProfileUpdateForm, DoctorProfileUpdateForm
 
@@ -76,16 +76,21 @@ def signup_patient(request):
                 # Parse DOB
                 dob_date = form.cleaned_data['dob']
                 
-                # Create patient profile
-                patientnew = patient(
+                # Create patient profile using new Django model
+                patientnew = Patient(
                     user=user,
                     name=form.cleaned_data['name'],
+                    email=form.cleaned_data['email'],
                     dob=dob_date,
+                    age=form.cleaned_data['age'],
                     gender=form.cleaned_data['gender'],
                     address=form.cleaned_data['address'],
                     mobile_no=form.cleaned_data['mobile_no']
                 )
                 patientnew.save()
+                
+                # Create user profile
+                UserProfile.objects.create(user=user)
                 
                 messages.success(request, 'Patient account created successfully! Please sign in with your credentials.')
                 return redirect('sign_in_patient')
@@ -107,37 +112,31 @@ def signup_patient(request):
 
 
 def sign_in_patient(request):
-  
-
     if request.method == 'POST':
-
-          username =  request.POST.get('username')
-          password =  request.POST.get('password')
- 
-          user = auth.authenticate(username=username,password=password)
-
-          if user is not None :
-             
-              try:
-                 if ( user.patient.is_patient == True ) :
-                     auth.login(request,user)
-
-                     request.session['patientusername'] = user.username
-
-                     return redirect('patient_ui')
-               
-              except :
-                  messages.info(request,'invalid credentials')
-                  return redirect('sign_in_patient')
-
-
-          else :
-             messages.info(request,'invalid credentials')
-             return redirect('sign_in_patient')
-
-
-    else :
-      return render(request,'patient/signin_page/index.html')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = auth.authenticate(username=username, password=password)
+        
+        if user is not None:
+            try:
+                # Check if user has a patient profile
+                patient_profile = user.patient_profile
+                if patient_profile.is_active:
+                    auth.login(request, user)
+                    request.session['patientusername'] = user.username
+                    return redirect('patient_ui')
+                else:
+                    messages.info(request, 'Your patient account is not active. Please contact support.')
+                    return redirect('sign_in_patient')
+            except Patient.DoesNotExist:
+                messages.info(request, 'Invalid credentials or patient account does not exist.')
+                return redirect('sign_in_patient')
+        else:
+            messages.info(request, 'Invalid credentials. Please check your username and password.')
+            return redirect('sign_in_patient')
+    else:
+        return render(request, 'patient/signin_page/index.html')
 
 
 def savepdata(request, patientusername):
@@ -207,10 +206,11 @@ def signup_doctor(request):
                 dob_date = form.cleaned_data['dob']
                 yor_date = form.cleaned_data['year_of_registration']
                 
-                # Create doctor profile
-                doctornew = doctor(
+                # Create doctor profile using new Django model
+                doctornew = Doctor(
                     user=user,
                     name=form.cleaned_data['name'],
+                    email=form.cleaned_data['email'],
                     dob=dob_date,
                     gender=form.cleaned_data['gender'],
                     address=form.cleaned_data['address'],
@@ -222,6 +222,9 @@ def signup_doctor(request):
                     specialization=form.cleaned_data['specialization']
                 )
                 doctornew.save()
+                
+                # Create user profile
+                UserProfile.objects.create(user=user)
                 
                 messages.success(request, 'Doctor account created successfully! Please sign in with your credentials.')
                 return redirect('sign_in_doctor')
@@ -244,41 +247,34 @@ def signup_doctor(request):
 
 
 def sign_in_doctor(request):
-
     if request.method == 'GET':
+        return render(request, 'doctor/signin_page/index.html')
     
-       return render(request,'doctor/signin_page/index.html')
-
-  
     if request.method == 'POST':
-
-          username =  request.POST.get('username')
-          password =  request.POST.get('password')
- 
-          user = auth.authenticate(username=username,password=password)
-
-          if user is not None :
-              
-              try:
-
-                if ( user.doctor.is_doctor == True ) :
-                  auth.login(request,user)
-                  
-                  request.session['doctorusername'] = user.username
-
-                  return redirect('doctor_ui')
-               
-              except :
-                  messages.info(request,'invalid credentials')
-                  return redirect('sign_in_doctor')
-
-          else :
-             messages.info(request,'invalid credentials')
-             return redirect('sign_in_doctor')
-
-
-    else :
-      return render(request,'doctor/signin_page/index.html')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        user = auth.authenticate(username=username, password=password)
+        
+        if user is not None:
+            try:
+                # Check if user has a doctor profile
+                doctor_profile = user.doctor_profile
+                if doctor_profile.is_active:
+                    auth.login(request, user)
+                    request.session['doctorusername'] = user.username
+                    return redirect('doctor_ui')
+                else:
+                    messages.info(request, 'Your doctor account is not active. Please contact support.')
+                    return redirect('sign_in_doctor')
+            except Doctor.DoesNotExist:
+                messages.info(request, 'Invalid credentials or doctor account does not exist.')
+                return redirect('sign_in_doctor')
+        else:
+            messages.info(request, 'Invalid credentials. Please check your username and password.')
+            return redirect('sign_in_doctor')
+    else:
+        return render(request, 'doctor/signin_page/index.html')
 
 
 
