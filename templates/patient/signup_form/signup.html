@@ -360,128 +360,281 @@
 <script>
   // Professional form validation and enhancements
   document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced form validation with real-time feedback
+    const validationRules = {
+      username: {
+        pattern: /^[a-zA-Z0-9_]+$/,
+        minLength: 3,
+        maxLength: 30,
+        errorMessages: {
+          invalid: 'Username can only contain letters, numbers, and underscores',
+          minLength: 'Username must be at least 3 characters long',
+          maxLength: 'Username cannot be more than 30 characters long'
+        }
+      },
+      password: {
+        minLength: 12,
+        hasUpper: /[A-Z]/,
+        hasLower: /[a-z]/,
+        hasDigit: /[0-9]/,
+        hasSpecial: /[!@#$%^&*(),.?":{}|<>_~`\-=+\[\]{};:|,./<>?]/,
+        noSequential: /(012|123|234|345|456|567|678|789|890|abc|bcd|cde|def|efg)/,
+        noCommon: /(password|admin|123|abc|qwerty|test|login)/,
+        noRepeats: /(.)\1\1\1/,
+        errorMessages: {
+          minLength: 'Password must be at least 12 characters long',
+          hasUpper: 'Password must contain at least one uppercase letter',
+          hasLower: 'Password must contain at least one lowercase letter',
+          hasDigit: 'Password must contain at least one digit',
+          hasSpecial: 'Password must contain at least one special character',
+          noSequential: 'Password cannot contain sequential characters like 123 or abc',
+          noCommon: 'Password contains common weak patterns',
+          noRepeats: 'Password cannot contain more than 3 repeated characters'
+        }
+      },
+      mobile: {
+        pattern: /^[6-9][0-9]{9}$/,
+        errorMessages: {
+          invalid: 'Mobile number must start with 6, 7, 8, or 9 and be 10 digits'
+        }
+      },
+      email: {
+        pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        errorMessages: {
+          invalid: 'Please enter a valid email address'
+        }
+      }
+    };
+
+    // Enhanced field validation function
+    function validateField(field, ruleType) {
+      const rule = validationRules[ruleType];
+      if (!rule) return { isValid: true };
+      
+      const value = field.value.trim();
+      const errors = [];
+      
+      // Clear previous validation states
+      field.style.borderColor = '#FFB3B3';
+      field.setCustomValidity('');
+      
+      // Remove previous error message
+      const existingError = field.parentNode.querySelector('.validation-error');
+      if (existingError) {
+        existingError.remove();
+      }
+      
+      if (!value) {
+        return { isValid: true }; // Empty fields are handled by HTML5 required
+      }
+      
+      let isValid = true;
+      
+      // Username validation
+      if (ruleType === 'username') {
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+        if (value.length < rule.minLength) {
+          errors.push(rule.errorMessages.minLength);
+          isValid = false;
+        }
+        if (value.length > rule.maxLength) {
+          errors.push(rule.errorMessages.maxLength);
+          isValid = false;
+        }
+      }
+      
+      // Password validation
+      if (ruleType === 'password') {
+        if (value.length < rule.minLength) {
+          errors.push(rule.errorMessages.minLength);
+          isValid = false;
+        }
+        if (!rule.hasUpper.test(value)) {
+          errors.push(rule.errorMessages.hasUpper);
+          isValid = false;
+        }
+        if (!rule.hasLower.test(value)) {
+          errors.push(rule.errorMessages.hasLower);
+          isValid = false;
+        }
+        if (!rule.hasDigit.test(value)) {
+          errors.push(rule.errorMessages.hasDigit);
+          isValid = false;
+        }
+        if (!rule.hasSpecial.test(value)) {
+          errors.push(rule.errorMessages.hasSpecial);
+          isValid = false;
+        }
+        if (rule.noSequential.test(value.toLowerCase())) {
+          errors.push(rule.errorMessages.noSequential);
+          isValid = false;
+        }
+        if (rule.noCommon.test(value.toLowerCase())) {
+          errors.push(rule.errorMessages.noCommon);
+          isValid = false;
+        }
+        if (rule.noRepeats.test(value)) {
+          errors.push(rule.errorMessages.noRepeats);
+          isValid = false;
+        }
+      }
+      
+      // Mobile validation
+      if (ruleType === 'mobile') {
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+      }
+      
+      // Email validation
+      if (ruleType === 'email') {
+        if (!rule.pattern.test(value)) {
+          errors.push(rule.errorMessages.invalid);
+          isValid = false;
+        }
+      }
+      
+      // Update field appearance
+      if (isValid) {
+        field.style.borderColor = '#28a745';
+      } else {
+        field.style.borderColor = '#dc3545';
+        field.setCustomValidity(errors[0]);
+        
+        // Show error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'validation-error';
+        errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+        errorDiv.textContent = errors[0];
+        field.parentNode.appendChild(errorDiv);
+      }
+      
+      return { isValid, errors };
+    }
+
     // Animate form fields on focus
     const inputs = document.querySelectorAll('.input-field');
     inputs.forEach(input => {
       input.addEventListener('focus', function() {
         this.parentElement.style.transform = 'translateY(-2px)';
+        this.parentElement.style.boxShadow = '0 5px 20px rgba(142, 68, 173, 0.2)';
       });
       
       input.addEventListener('blur', function() {
         this.parentElement.style.transform = 'translateY(0)';
+        this.parentElement.style.boxShadow = '';
       });
     });
 
-    // Enhanced password validation
-    const password = document.querySelector('input[name="password"]');
-    const password1 = document.querySelector('input[name="password1"]');
+    // Real-time validation setup
+    const usernameField = document.querySelector('input[name="username"]');
+    const passwordField = document.querySelector('input[name="password"]');
+    const password1Field = document.querySelector('input[name="password1"]');
+    const mobileField = document.querySelector('input[name="mobile_no"]');
+    const emailField = document.querySelector('input[name="email"]');
+    const ageField = document.querySelector('input[name="age"]');
+    const dobField = document.querySelector('input[name="dob"]');
     
-    if (password && password1) {
-      password1.addEventListener('input', function() {
-        if (password.value !== this.value) {
-          this.setCustomValidity('Passwords do not match');
-          this.style.borderColor = '#ff6b6b';
-        } else {
-          this.setCustomValidity('');
-          this.style.borderColor = '#8E44AD';
-        }
+    // Username real-time validation
+    if (usernameField) {
+      usernameField.addEventListener('input', function() {
+        validateField(this, 'username');
       });
-
-      password.addEventListener('input', function() {
-        if (password1.value && password.value !== password1.value) {
-          password1.style.borderColor = '#ff6b6b';
-        } else {
-          password1.style.borderColor = '#8E44AD';
+    }
+    
+    // Password real-time validation
+    if (passwordField) {
+      passwordField.addEventListener('input', function() {
+        validateField(this, 'password');
+        
+        // Check password similarity with username
+        if (usernameField && usernameField.value && this.value) {
+          const username = usernameField.value.toLowerCase();
+          const password = this.value.toLowerCase();
+          
+          if (username.length >= 3 && password.includes(username)) {
+            this.setCustomValidity('Password cannot contain your username');
+            this.style.borderColor = '#dc3545';
+            
+            // Show similarity error
+            const existingError = this.parentNode.querySelector('.validation-error');
+            if (existingError) {
+              existingError.textContent = 'Password cannot contain your username';
+            }
+          }
         }
       });
     }
-
-    // Enhanced phone number validation
-    const mobile = document.querySelector('input[name="mobile_no"]');
-    if (mobile) {
-      mobile.addEventListener('input', function() {
+    
+    // Password confirmation validation
+    if (password1Field && passwordField) {
+      password1Field.addEventListener('input', function() {
+        if (passwordField.value !== this.value) {
+          this.setCustomValidity('Passwords do not match');
+          this.style.borderColor = '#dc3545';
+          
+          // Show mismatch error
+          const existingError = this.parentNode.querySelector('.validation-error');
+          if (existingError) {
+            existingError.textContent = 'Passwords do not match';
+          }
+        } else {
+          this.setCustomValidity('');
+          this.style.borderColor = '#28a745';
+          
+          // Remove error message
+          const existingError = this.parentNode.querySelector('.validation-error');
+          if (existingError) {
+            existingError.remove();
+          }
+        }
+      });
+    }
+    
+    // Mobile number real-time validation
+    if (mobileField) {
+      mobileField.addEventListener('input', function() {
+        // Clean input - only digits
         let value = this.value.replace(/\D/g, '');
         if (value.length > 10) {
           value = value.substring(0, 10);
         }
         this.value = value;
         
-        // Real-time validation feedback
-        if (value.length === 10) {
-          const validPrefix = ['6', '7', '8', '9'];
-          if (validPrefix.includes(value[0])) {
-            this.style.borderColor = '#28a745';
-            this.setCustomValidity('');
-          } else {
-            this.style.borderColor = '#dc3545';
-            this.setCustomValidity('Mobile number must start with 6, 7, 8, or 9');
-          }
-        } else if (value.length > 0) {
-          this.style.borderColor = '#ffc107';
-          this.setCustomValidity('Mobile number must be exactly 10 digits');
-        } else {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        }
+        validateField(this, 'mobile');
       });
     }
-
-    // Username validation
-    const username = document.querySelector('input[name="username"]');
-    if (username) {
-      username.addEventListener('input', function() {
-        const value = this.value;
-        const isValid = /^[a-zA-Z0-9_]+$/.test(value) && value.length >= 3 && value.length <= 30;
-        
-        if (value.length === 0) {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        } else if (isValid) {
-          this.style.borderColor = '#28a745';
-          this.setCustomValidity('');
-        } else {
-          this.style.borderColor = '#dc3545';
-          if (value.length < 3) {
-            this.setCustomValidity('Username must be at least 3 characters long');
-          } else if (value.length > 30) {
-            this.setCustomValidity('Username cannot be more than 30 characters long');
-          } else {
-            this.setCustomValidity('Username can only contain letters, numbers, and underscores');
-          }
-        }
-      });
-    }
-
-    // Email validation
-    const email = document.querySelector('input[name="email"]');
-    if (email) {
-      email.addEventListener('input', function() {
-        const value = this.value;
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        
-        if (value.length === 0) {
-          this.style.borderColor = '#FFB3B3';
-          this.setCustomValidity('');
-        } else if (emailRegex.test(value)) {
-          this.style.borderColor = '#28a745';
-          this.setCustomValidity('');
-        } else {
-          this.style.borderColor = '#dc3545';
-          this.setCustomValidity('Please enter a valid email address');
-        }
-      });
-    }
-
-    // Age and DOB validation
-    const age = document.querySelector('input[name="age"]');
-    const dob = document.querySelector('input[name="dob"]');
     
-    if (age && dob) {
-      const validateAge = () => {
-        const ageValue = parseInt(age.value);
-        const dobValue = new Date(dob.value);
+    // Email real-time validation
+    if (emailField) {
+      emailField.addEventListener('input', function() {
+        validateField(this, 'email');
+      });
+    }
+    
+    // Age and DOB validation
+    if (ageField && dobField) {
+      const validateAgeDOB = () => {
+        const ageValue = parseInt(ageField.value);
+        const dobValue = new Date(dobField.value);
         
-        if (ageValue && dobValue) {
+        // Clear previous validation
+        ageField.style.borderColor = '#FFB3B3';
+        dobField.style.borderColor = '#FFB3B3';
+        
+        // Remove existing errors
+        [ageField, dobField].forEach(field => {
+          const existingError = field.parentNode.querySelector('.validation-error');
+          if (existingError) {
+            existingError.remove();
+          }
+        });
+        
+        if (ageValue && dobField.value) {
           const today = new Date();
           const calculatedAge = today.getFullYear() - dobValue.getFullYear();
           const monthDiff = today.getMonth() - dobValue.getMonth();
@@ -490,45 +643,121 @@
             calculatedAge--;
           }
           
-          if (Math.abs(ageValue - calculatedAge) <= 1) {
-            age.style.borderColor = '#28a745';
-            dob.style.borderColor = '#28a745';
+          const ageDiff = Math.abs(ageValue - calculatedAge);
+          
+          if (ageDiff <= 1) {
+            ageField.style.borderColor = '#28a745';
+            dobField.style.borderColor = '#28a745';
           } else {
-            age.style.borderColor = '#dc3545';
-            dob.style.borderColor = '#dc3545';
+            ageField.style.borderColor = '#dc3545';
+            dobField.style.borderColor = '#dc3545';
+            
+            const errorMsg = `Age ${ageValue} doesn't match DOB. Expected approximately ${calculatedAge} years old.`;
+            ageField.setCustomValidity(errorMsg);
+            dobField.setCustomValidity(errorMsg);
+            
+            [ageField, dobField].forEach(field => {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'validation-error';
+              errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+              errorDiv.textContent = errorMsg;
+              field.parentNode.appendChild(errorDiv);
+            });
           }
+        } else {
+          ageField.setCustomValidity('');
+          dobField.setCustomValidity('');
         }
       };
       
-      age.addEventListener('input', validateAge);
-      dob.addEventListener('input', validateAge);
+      ageField.addEventListener('input', validateAgeDOB);
+      dobField.addEventListener('input', validateAgeDOB);
     }
 
-    // Real-time form submission prevention if invalid
+    // Enhanced form submission validation
     const form = document.querySelector('form');
     if (form) {
       form.addEventListener('submit', function(e) {
         const inputs = this.querySelectorAll('input[required], select[required]');
         let isValid = true;
+        let firstInvalid = null;
         
+        // Validate all fields
         inputs.forEach(input => {
+          // Run custom validation
+          if (input.name === 'username' && usernameField) {
+            const result = validateField(input, 'username');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'password' && passwordField) {
+            const result = validateField(input, 'password');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'mobile_no' && mobileField) {
+            const result = validateField(input, 'mobile');
+            if (!result.isValid) isValid = false;
+          } else if (input.name === 'email' && emailField) {
+            const result = validateField(input, 'email');
+            if (!result.isValid) isValid = false;
+          }
+          
+          // Check HTML5 validity
           if (!input.checkValidity()) {
             isValid = false;
             input.style.borderColor = '#dc3545';
+            if (!firstInvalid) firstInvalid = input;
           }
         });
         
         if (!isValid) {
           e.preventDefault();
+          
           // Scroll to first invalid field
-          const firstInvalid = this.querySelector('input:invalid, select:invalid');
           if (firstInvalid) {
             firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            firstInvalid.focus();
+            setTimeout(() => firstInvalid.focus(), 300);
           }
+          
+          // Show summary message
+          const summaryDiv = document.createElement('div');
+          summaryDiv.className = 'alert alert-danger';
+          summaryDiv.style.cssText = 'margin-bottom: 20px; border-radius: 10px;';
+          summaryDiv.innerHTML = '<strong>Please fix the following errors:</strong><br>• Check highlighted fields for validation errors';
+          
+          const formContainer = form.parentNode;
+          formContainer.insertBefore(summaryDiv, form);
+          
+          // Remove summary after 5 seconds
+          setTimeout(() => {
+            if (summaryDiv.parentNode) {
+              summaryDiv.remove();
+            }
+          }, 5000);
         }
       });
     }
+
+    // Add CSS animations
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .validation-error {
+        animation: fadeIn 0.3s ease;
+      }
+      
+      .input-field:focus {
+        animation: focusPulse 0.3s ease;
+      }
+      
+      @keyframes focusPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
   });
 </script>
 

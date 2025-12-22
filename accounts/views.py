@@ -1,36 +1,79 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, csrf_protect
+from django.views.decorators.cache import never_cache
 
 from django.contrib import messages
 from django.contrib.auth.models import User , auth
 from main_app.models import patient , doctor
-from datetime import datetime
+from datetime import datetime, timedelta
 from .forms import PatientSignupForm, DoctorSignupForm, PatientProfileUpdateForm, DoctorProfileUpdateForm
+from django.conf import settings
 
 # Create your views here.
 
 
    
 def logout(request):
+    """Enhanced logout with proper session cleanup and security"""
+    # Get the username before logout for logging
+    username = None
+    user_type = None
+    
+    if request.user.is_authenticated:
+        username = request.user.username
+        if hasattr(request.user, 'patient'):
+            user_type = 'patient'
+        elif hasattr(request.user, 'doctor'):
+            user_type = 'doctor'
+        elif request.user.is_superuser:
+            user_type = 'admin'
+    
+    # Clear all session data
+    session_keys_to_remove = [
+        'patientid', 'doctorid', 'adminid', 
+        'patientusername', 'doctorusername', 'admin_username',
+        'patient_session_start', 'doctor_session_start', 'admin_session_start'
+    ]
+    
+    for key in session_keys_to_remove:
+        request.session.pop(key, None)
+    
+    # Logout user
     auth.logout(request)
-    request.session.pop('patientid', None)
-    request.session.pop('doctorid', None)
-    request.session.pop('adminid', None)
-    return render(request,'homepage/index.html')
+    
+    # Add success message
+    messages.success(request, 'You have been successfully logged out.')
+    
+    # Log the logout event (for audit purposes)
+    print(f"User logout: {username} ({user_type}) at {datetime.now()}")
+    
+    return redirect('homepage')
 
 
 
 
+@csrf_protect
+@never_cache
 def sign_in_admin(request):
+    """Enhanced admin login with improved security and session management"""
+    
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
 
         # Validate input
         if not username or not password:
-            messages.info(request, 'Please enter both username and password.')
+            messages.error(request, 'Please enter both username and password.')
+            return redirect('sign_in_admin')
+
+        # Rate limiting check (simple implementation)
+        login_attempts_key = f'admin_login_attempts_{request.META.get("REMOTE_ADDR", "unknown")}'
+        attempts = request.session.get(login_attempts_key, 0)
+        
+        if attempts >= 5:  # Max 5 attempts
+            messages.error(request, 'Too many login attempts. Please try again later.')
             return redirect('sign_in_admin')
 
         # Authenticate user
@@ -39,18 +82,37 @@ def sign_in_admin(request):
         if user is not None:
             # Check if user is superuser (admin)
             if user.is_superuser and user.is_staff:
+                # Reset login attempts on successful login
+                request.session.pop(login_attempts_key, None)
+                
+                # Check if account is active
+                if not user.is_active:
+                    messages.error(request, 'Your account has been deactivated. Please contact support.')
+                    return redirect('sign_in_admin')
+                
+                # Login user
                 auth.login(request, user)
-                # Store admin info in session
+                
+                # Store enhanced admin info in session
                 request.session['adminid'] = user.id
                 request.session['admin_username'] = user.username
+                request.session['admin_session_start'] = datetime.now().isoformat()
+                request.session['admin_login_ip'] = request.META.get('REMOTE_ADDR', 'unknown')
                 
-                messages.success(request, f'Welcome, {user.username}!')
+                # Log successful login
+                print(f"Admin login successful: {user.username} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}")
+                
+                messages.success(request, f'Welcome back, {user.username}!')
                 return redirect('admin_ui')
             else:
-                messages.info(request, 'This account does not have admin privileges.')
+                # Increment failed attempts
+                request.session[login_attempts_key] = attempts + 1
+                messages.error(request, 'This account does not have admin privileges.')
                 return redirect('sign_in_admin')
         else:
-            messages.info(request, 'Invalid username or password. Please check your credentials.')
+            # Increment failed attempts
+            request.session[login_attempts_key] = attempts + 1
+            messages.error(request, 'Invalid username or password. Please check your credentials.')
             return redirect('sign_in_admin')
     else:
         # Handle GET request - show login form
@@ -58,6 +120,8 @@ def sign_in_admin(request):
 
 
 
+@csrf_protect
+@never_cache
 def signup_patient(request):
     """Professional patient signup with comprehensive validation"""
     
@@ -106,38 +170,68 @@ def signup_patient(request):
 
 
 
+@csrf_protect
+@never_cache
 def sign_in_patient(request):
-  
-
+    """Enhanced patient login with improved security and session management"""
+    
     if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
 
-          username =  request.POST.get('username')
-          password =  request.POST.get('password')
- 
-          user = auth.authenticate(username=username,password=password)
+        # Validate input
+        if not username or not password:
+            messages.error(request, 'Please enter both username and password.')
+            return redirect('sign_in_patient')
 
-          if user is not None :
-             
-              try:
-                 if ( user.patient.is_patient == True ) :
-                     auth.login(request,user)
+        # Rate limiting check
+        login_attempts_key = f'patient_login_attempts_{request.META.get("REMOTE_ADDR", "unknown")}'
+        attempts = request.session.get(login_attempts_key, 0)
+        
+        if attempts >= 5:  # Max 5 attempts
+            messages.error(request, 'Too many login attempts. Please try again later.')
+            return redirect('sign_in_patient')
 
-                     request.session['patientusername'] = user.username
+        # Authenticate user
+        user = auth.authenticate(username=username, password=password)
 
-                     return redirect('patient_ui')
-               
-              except :
-                  messages.info(request,'invalid credentials')
-                  return redirect('sign_in_patient')
+        if user is not None:
+            try:
+                if user.patient.is_patient == True:
+                    # Reset login attempts on successful login
+                    request.session.pop(login_attempts_key, None)
+                    
+                    # Check if account is active
+                    if not user.is_active:
+                        messages.error(request, 'Your account has been deactivated. Please contact support.')
+                        return redirect('sign_in_patient')
+                    
+                    # Login user
+                    auth.login(request, user)
 
-
-          else :
-             messages.info(request,'invalid credentials')
-             return redirect('sign_in_patient')
-
-
-    else :
-      return render(request,'patient/signin_page/index.html')
+                    # Store enhanced patient info in session
+                    request.session['patientusername'] = user.username
+                    request.session['patient_session_start'] = datetime.now().isoformat()
+                    request.session['patient_login_ip'] = request.META.get('REMOTE_ADDR', 'unknown')
+                    
+                    # Log successful login
+                    print(f"Patient login successful: {user.username} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}")
+                    
+                    messages.success(request, f'Welcome back, {user.username}!')
+                    return redirect('patient_ui')
+                    
+            except patient.DoesNotExist:
+                # Increment failed attempts
+                request.session[login_attempts_key] = attempts + 1
+                messages.error(request, 'This account is not a patient account.')
+                return redirect('sign_in_patient')
+        else:
+            # Increment failed attempts
+            request.session[login_attempts_key] = attempts + 1
+            messages.error(request, 'Invalid username or password. Please check your credentials.')
+            return redirect('sign_in_patient')
+    else:
+        return render(request, 'patient/signin_page/index.html')
 
 
 def savepdata(request, patientusername):
@@ -184,6 +278,8 @@ def savepdata(request, patientusername):
 #doctors account...........operations......
     
 
+@csrf_protect
+@never_cache
 def signup_doctor(request):
     """Professional doctor signup with comprehensive validation"""
     
@@ -243,42 +339,71 @@ def signup_doctor(request):
 
 
 
+@csrf_protect
+@never_cache
 def sign_in_doctor(request):
-
-    if request.method == 'GET':
+    """Enhanced doctor login with improved security and session management"""
     
-       return render(request,'doctor/signin_page/index.html')
+    if request.method == 'GET':
+        return render(request, 'doctor/signin_page/index.html')
 
-  
     if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '')
 
-          username =  request.POST.get('username')
-          password =  request.POST.get('password')
- 
-          user = auth.authenticate(username=username,password=password)
+        # Validate input
+        if not username or not password:
+            messages.error(request, 'Please enter both username and password.')
+            return redirect('sign_in_doctor')
 
-          if user is not None :
-              
-              try:
+        # Rate limiting check
+        login_attempts_key = f'doctor_login_attempts_{request.META.get("REMOTE_ADDR", "unknown")}'
+        attempts = request.session.get(login_attempts_key, 0)
+        
+        if attempts >= 5:  # Max 5 attempts
+            messages.error(request, 'Too many login attempts. Please try again later.')
+            return redirect('sign_in_doctor')
 
-                if ( user.doctor.is_doctor == True ) :
-                  auth.login(request,user)
-                  
-                  request.session['doctorusername'] = user.username
+        # Authenticate user
+        user = auth.authenticate(username=username, password=password)
 
-                  return redirect('doctor_ui')
-               
-              except :
-                  messages.info(request,'invalid credentials')
-                  return redirect('sign_in_doctor')
-
-          else :
-             messages.info(request,'invalid credentials')
-             return redirect('sign_in_doctor')
-
-
-    else :
-      return render(request,'doctor/signin_page/index.html')
+        if user is not None:
+            try:
+                if user.doctor.is_doctor == True:
+                    # Reset login attempts on successful login
+                    request.session.pop(login_attempts_key, None)
+                    
+                    # Check if account is active
+                    if not user.is_active:
+                        messages.error(request, 'Your account has been deactivated. Please contact support.')
+                        return redirect('sign_in_doctor')
+                    
+                    # Login user
+                    auth.login(request, user)
+                    
+                    # Store enhanced doctor info in session
+                    request.session['doctorusername'] = user.username
+                    request.session['doctor_session_start'] = datetime.now().isoformat()
+                    request.session['doctor_login_ip'] = request.META.get('REMOTE_ADDR', 'unknown')
+                    
+                    # Log successful login
+                    print(f"Doctor login successful: {user.username} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}")
+                    
+                    messages.success(request, f'Welcome back, Dr. {user.username}!')
+                    return redirect('doctor_ui')
+                    
+            except doctor.DoesNotExist:
+                # Increment failed attempts
+                request.session[login_attempts_key] = attempts + 1
+                messages.error(request, 'This account is not a doctor account.')
+                return redirect('sign_in_doctor')
+        else:
+            # Increment failed attempts
+            request.session[login_attempts_key] = attempts + 1
+            messages.error(request, 'Invalid username or password. Please check your credentials.')
+            return redirect('sign_in_doctor')
+    else:
+        return render(request, 'doctor/signin_page/index.html')
 
 
 

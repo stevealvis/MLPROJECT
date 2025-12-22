@@ -32,21 +32,43 @@ def validate_registration_number(value):
         raise ValidationError('Registration number cannot be more than 20 characters long.')
 
 def validate_password_strength(value):
-    """Validate password strength"""
-    if len(value) < 8:
-        raise ValidationError('Password must be at least 8 characters long.')
+    """Validate password strength with enhanced security"""
+    if len(value) < 12:
+        raise ValidationError('Password must be at least 12 characters long for enhanced security.')
     
     if not re.search(r'[A-Z]', value):
-        raise ValidationError('Password must contain at least one uppercase letter.')
+        raise ValidationError('Password must contain at least one uppercase letter (A-Z).')
     
     if not re.search(r'[a-z]', value):
-        raise ValidationError('Password must contain at least one lowercase letter.')
+        raise ValidationError('Password must contain at least one lowercase letter (a-z).')
     
     if not re.search(r'\d', value):
-        raise ValidationError('Password must contain at least one digit.')
+        raise ValidationError('Password must contain at least one digit (0-9).')
     
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>_~`\-=+\[\]{};:|,./<>?]', value):
         raise ValidationError('Password must contain at least one special character.')
+    
+    # Check for common weak patterns (more specific to avoid false positives)
+    common_weak_patterns = [
+        '123456', 'password123', 'admin123', 'qwerty', 'abc123',
+        'welcome123', 'test123', 'login123', '123456789'
+    ]
+    
+    password_lower = value.lower()
+    for pattern in common_weak_patterns:
+        if pattern in password_lower:
+            raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
+    
+    # Check for sequential characters (more lenient - only reject long sequences)
+    if re.search(r'(0123|1234|2345|3456|4567|5678|6789|7890|abcd|bcde|cdef|defg)', value.lower()):
+        raise ValidationError('Password cannot contain long sequential characters like 1234 or abcd.')
+    
+    # Check for repeated characters (more than 3 in a row)
+    if re.search(r'(.)\1\1\1', value):
+        raise ValidationError('Password cannot contain more than 3 repeated characters in a row.')
+    
+    # Ensure password is not too similar to username or email
+    # This will be checked in the form's clean method where we have access to all fields
 
 def validate_dob(value):
     """Validate date of birth"""
@@ -149,9 +171,9 @@ class PatientSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password',
+            'placeholder': 'Password (min 12 chars, strong security)',
             'required': True,
-            'title': 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
         })
     )
     
@@ -179,11 +201,53 @@ class PatientSignupForm(forms.Form):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         password1 = cleaned_data.get('password1')
+        username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
         
+        # Check password confirmation
         if password and password1 and password != password1:
             raise ValidationError('Passwords do not match.')
         
+        # Check password similarity with username
+        if password and username:
+            password_lower = password.lower()
+            username_lower = username.lower()
+            
+            # Check if password contains username (more than 3 characters)
+            if len(username_lower) >= 3 and username_lower in password_lower:
+                raise ValidationError('Password cannot contain your username.')
+            
+            # Check similarity (80% or more similarity)
+            if self.calculate_similarity(password_lower, username_lower) > 0.8:
+                raise ValidationError('Password is too similar to your username.')
+        
+        # Check password similarity with email
+        if password and email:
+            password_lower = password.lower()
+            email_parts = email.lower().split('@')[0]  # Get part before @
+            
+            # Check if password contains email prefix
+            if len(email_parts) >= 3 and email_parts in password_lower:
+                raise ValidationError('Password cannot contain your email address.')
+            
+            # Check similarity
+            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+                raise ValidationError('Password is too similar to your email address.')
+        
         return cleaned_data
+    
+    def calculate_similarity(self, str1, str2):
+        """Calculate similarity between two strings (0-1 scale)"""
+        if not str1 or not str2:
+            return 0
+        
+        # Simple character-based similarity
+        common_chars = 0
+        for char in set(str1):
+            common_chars += min(str1.count(char), str2.count(char))
+        
+        total_chars = max(len(str1), len(str2))
+        return common_chars / total_chars if total_chars > 0 else 0
     
     def clean_age(self):
         age = self.cleaned_data['age']
@@ -340,9 +404,9 @@ class DoctorSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password',
+            'placeholder': 'Password (min 12 chars, strong security)',
             'required': True,
-            'title': 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
         })
     )
     
@@ -386,50 +450,296 @@ class DoctorSignupForm(forms.Form):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         password1 = cleaned_data.get('password1')
+        username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
         
+        # Check password confirmation
         if password and password1 and password != password1:
             raise ValidationError('Passwords do not match.')
         
+        # Check password similarity with username
+        if password and username:
+            password_lower = password.lower()
+            username_lower = username.lower()
+            
+            # Check if password contains username (more than 3 characters)
+            if len(username_lower) >= 3 and username_lower in password_lower:
+                raise ValidationError('Password cannot contain your username.')
+            
+            # Check similarity (80% or more similarity)
+            if self.calculate_similarity(password_lower, username_lower) > 0.8:
+                raise ValidationError('Password is too similar to your username.')
+        
+        # Check password similarity with email
+        if password and email:
+            password_lower = password.lower()
+            email_parts = email.lower().split('@')[0]  # Get part before @
+            
+            # Check if password contains email prefix
+            if len(email_parts) >= 3 and email_parts in password_lower:
+                raise ValidationError('Password cannot contain your email address.')
+            
+            # Check similarity
+            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+                raise ValidationError('Password is too similar to your email address.')
+        
         return cleaned_data
+    
+    def calculate_similarity(self, str1, str2):
+        """Calculate similarity between two strings (0-1 scale)"""
+        if not str1 or not str2:
+            return 0
+        
+        # Simple character-based similarity
+        common_chars = 0
+        for char in set(str1):
+            common_chars += min(str1.count(char), str2.count(char))
+        
+        total_chars = max(len(str1), len(str2))
+        return common_chars / total_chars if total_chars > 0 else 0
 
 
 class PatientProfileUpdateForm(forms.Form):
-    """Form for updating patient profile"""
+    """Professional patient profile update form with comprehensive validation"""
     
-    name = forms.CharField(max_length=50, required=True)
-    dob = forms.DateField(validators=[validate_dob], required=True)
-    gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], required=True)
-    address = forms.CharField(max_length=100, required=True)
-    mobile_no = forms.CharField(max_length=10, validators=[validate_mobile_number], required=True)
+    name = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Full Name',
+            'required': True
+        })
+    )
+    
+    dob = forms.DateField(
+        validators=[validate_dob],
+        widget=forms.DateInput(attrs={
+            'class': 'input-field',
+            'type': 'date',
+            'required': True
+        })
+    )
+    
+    gender = forms.ChoiceField(
+        choices=[
+            ('male', 'Male'),
+            ('female', 'Female'),
+            ('other', 'Other')
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'radio-btn',
+            'required': True
+        })
+    )
+    
+    address = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Complete Address',
+            'required': True
+        })
+    )
+    
+    mobile_no = forms.CharField(
+        max_length=10,
+        validators=[validate_mobile_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Mobile Number',
+            'required': True,
+            'pattern': '[0-9]{10}',
+            'title': 'Please enter 10 digit mobile number'
+        })
+    )
+    
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if len(name) < 2:
+            raise ValidationError('Name must be at least 2 characters long.')
+        if len(name) > 50:
+            raise ValidationError('Name cannot be more than 50 characters long.')
+        return name
+    
+    def clean_address(self):
+        address = self.cleaned_data['address'].strip()
+        if len(address) < 10:
+            raise ValidationError('Address must be at least 10 characters long.')
+        if len(address) > 100:
+            raise ValidationError('Address cannot be more than 100 characters long.')
+        return address
 
 
 class DoctorProfileUpdateForm(forms.Form):
-    """Form for updating doctor profile"""
+    """Professional doctor profile update form with comprehensive validation"""
     
-    name = forms.CharField(max_length=50, required=True)
-    dob = forms.DateField(validators=[validate_dob], required=True)
-    gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], required=True)
-    address = forms.CharField(max_length=100, required=True)
-    mobile_no = forms.CharField(max_length=10, validators=[validate_mobile_number], required=True)
-    registration_no = forms.CharField(max_length=20, validators=[validate_registration_number], required=True)
-    year_of_registration = forms.DateField(required=True)
-    qualification = forms.CharField(max_length=20, required=True)
-    State_Medical_Council = forms.CharField(max_length=30, required=True)
-    specialization = forms.ChoiceField(choices=[
-        ('', 'Select Specialization'),
-        ('Rheumatologist', 'Rheumatologist'),
-        ('Cardiologist', 'Cardiologist'),
-        ('ENT specialist', 'ENT Specialist'),
-        ('Orthopedist', 'Orthopedist'),
-        ('Neurologist', 'Neurologist'),
-        ('Allergist/Immunologist', 'Allergist/Immunologist'),
-        ('Urologist', 'Urologist'),
-        ('Dermatologist', 'Dermatologist'),
-        ('Gastroenterologist', 'Gastroenterologist'),
-        ('General Physician', 'General Physician'),
-        ('Pediatrician', 'Pediatrician'),
-        ('Psychiatrist', 'Psychiatrist'),
-        ('Oncologist', 'Oncologist'),
-        ('Ophthalmologist', 'Ophthalmologist'),
-        ('Other', 'Other'),
-    ], required=True)
+    name = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Full Name',
+            'required': True
+        })
+    )
+    
+    dob = forms.DateField(
+        validators=[validate_dob],
+        widget=forms.DateInput(attrs={
+            'class': 'input-field',
+            'type': 'date',
+            'required': True
+        })
+    )
+    
+    gender = forms.ChoiceField(
+        choices=[
+            ('male', 'Male'),
+            ('female', 'Female'),
+            ('other', 'Other')
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'radio-btn',
+            'required': True
+        })
+    )
+    
+    address = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Complete Address',
+            'required': True
+        })
+    )
+    
+    mobile_no = forms.CharField(
+        max_length=10,
+        validators=[validate_mobile_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Mobile Number',
+            'required': True,
+            'pattern': '[0-9]{10}',
+            'title': 'Please enter 10 digit mobile number'
+        })
+    )
+    
+    registration_no = forms.CharField(
+        max_length=20,
+        validators=[validate_registration_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Medical Registration Number',
+            'required': True,
+            'title': 'Enter your medical registration number'
+        })
+    )
+    
+    year_of_registration = forms.DateField(
+        required=True,
+        widget=forms.DateInput(attrs={
+            'class': 'input-field',
+            'type': 'date',
+            'required': True
+        })
+    )
+    
+    qualification = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Qualification (e.g., MBBS, MD, etc.)',
+            'required': True
+        })
+    )
+    
+    State_Medical_Council = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'State Medical Council',
+            'required': True
+        })
+    )
+    
+    specialization = forms.ChoiceField(
+        choices=[
+            ('', 'Select Specialization'),
+            ('Rheumatologist', 'Rheumatologist'),
+            ('Cardiologist', 'Cardiologist'),
+            ('ENT specialist', 'ENT Specialist'),
+            ('Orthopedist', 'Orthopedist'),
+            ('Neurologist', 'Neurologist'),
+            ('Allergist/Immunologist', 'Allergist/Immunologist'),
+            ('Urologist', 'Urologist'),
+            ('Dermatologist', 'Dermatologist'),
+            ('Gastroenterologist', 'Gastroenterologist'),
+            ('General Physician', 'General Physician'),
+            ('Pediatrician', 'Pediatrician'),
+            ('Psychiatrist', 'Psychiatrist'),
+            ('Oncologist', 'Oncologist'),
+            ('Ophthalmologist', 'Ophthalmologist'),
+            ('Other', 'Other'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
+        })
+    )
+    
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if len(name) < 2:
+            raise ValidationError('Name must be at least 2 characters long.')
+        if len(name) > 50:
+            raise ValidationError('Name cannot be more than 50 characters long.')
+        return name
+    
+    def clean_address(self):
+        address = self.cleaned_data['address'].strip()
+        if len(address) < 10:
+            raise ValidationError('Address must be at least 10 characters long.')
+        if len(address) > 100:
+            raise ValidationError('Address cannot be more than 100 characters long.')
+        return address
+    
+    def clean_qualification(self):
+        qualification = self.cleaned_data['qualification'].strip()
+        if len(qualification) < 2:
+            raise ValidationError('Qualification must be at least 2 characters long.')
+        if len(qualification) > 20:
+            raise ValidationError('Qualification cannot be more than 20 characters long.')
+        return qualification
+    
+    def clean_State_Medical_Council(self):
+        council = self.cleaned_data['State_Medical_Council'].strip()
+        if len(council) < 3:
+            raise ValidationError('State Medical Council must be at least 3 characters long.')
+        if len(council) > 30:
+            raise ValidationError('State Medical Council cannot be more than 30 characters long.')
+        return council
+    
+    def clean_year_of_registration(self):
+        year_of_reg = self.cleaned_data['year_of_registration']
+        dob = self.cleaned_data.get('dob')
+        
+        if year_of_reg and dob:
+            # Doctor should be at least 24 years old when registering
+            age_at_registration = year_of_reg.year - dob.year - ((year_of_reg.month, year_of_reg.day) < (dob.month, dob.day))
+            if age_at_registration < 24:
+                raise ValidationError('Invalid year of registration. You should be at least 24 years old when registering.')
+            
+            # Registration should not be in the future
+            if year_of_reg > date.today():
+                raise ValidationError('Registration year cannot be in the future.')
+        
+        return year_of_reg
