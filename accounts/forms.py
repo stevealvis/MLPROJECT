@@ -414,6 +414,19 @@ class PatientSignupForm(forms.Form):
                 self.add_error('password', ValidationError('Password is too similar to your email address.'))
         
         return cleaned_data
+    
+    def calculate_similarity(self, str1, str2):
+        """Calculate similarity between two strings (0-1 scale)"""
+        if not str1 or not str2:
+            return 0
+        
+        # Simple character-based similarity
+        common_chars = 0
+        for char in set(str1):
+            common_chars += min(str1.count(char), str2.count(char))
+        
+        total_chars = max(len(str1), len(str2))
+        return common_chars / total_chars if total_chars > 0 else 0
 
 
 class DoctorSignupForm(forms.Form):
