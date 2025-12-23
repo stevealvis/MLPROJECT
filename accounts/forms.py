@@ -124,8 +124,8 @@ def validate_registration_number(value):
 
 def validate_password_strength(value):
     """Validate password strength with enhanced security"""
-    if len(value) < 12:
-        raise ValidationError('Password must be at least 12 characters long for enhanced security.')
+    if len(value) < 6:
+        raise ValidationError('Password must be at least 6 characters long.')
     
     if not re.search(r'[A-Z]', value):
         raise ValidationError('Password must contain at least one uppercase letter (A-Z).')
@@ -278,9 +278,10 @@ class PatientSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password (min 12 chars, strong security)',
+            'placeholder': 'Password (min 6 chars)',
             'required': True,
-            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
+            'minlength': '6',
+            'title': 'Password must be at least 6 characters and include uppercase, lowercase, number, and special character.'
         })
     )
     
@@ -321,6 +322,57 @@ class PatientSignupForm(forms.Form):
             self.add_error('city', ValidationError('Please select a city.'))
         if not state or state == '':
             self.add_error('state', ValidationError('Please select a state.'))
+        
+        # Validate city-state relationship
+        if city and state and city != '' and state != '':
+            city_state_map = {
+                'Mumbai': 'Maharashtra',
+                'Pune': 'Maharashtra',
+                'Nagpur': 'Maharashtra',
+                'Nashik': 'Maharashtra',
+                'Thane': 'Maharashtra',
+                'Delhi': 'Delhi',
+                'Bangalore': 'Karnataka',
+                'Mysore': 'Karnataka',
+                'Hubli': 'Karnataka',
+                'Hyderabad': 'Telangana',
+                'Chennai': 'Tamil Nadu',
+                'Madurai': 'Tamil Nadu',
+                'Kolkata': 'West Bengal',
+                'Ahmedabad': 'Gujarat',
+                'Surat': 'Gujarat',
+                'Vadodara': 'Gujarat',
+                'Rajkot': 'Gujarat',
+                'Jaipur': 'Rajasthan',
+                'Jodhpur': 'Rajasthan',
+                'Lucknow': 'Uttar Pradesh',
+                'Kanpur': 'Uttar Pradesh',
+                'Agra': 'Uttar Pradesh',
+                'Varanasi': 'Uttar Pradesh',
+                'Ghaziabad': 'Uttar Pradesh',
+                'Meerut': 'Uttar Pradesh',
+                'Indore': 'Madhya Pradesh',
+                'Bhopal': 'Madhya Pradesh',
+                'Gwalior': 'Madhya Pradesh',
+                'Visakhapatnam': 'Andhra Pradesh',
+                'Vijayawada': 'Andhra Pradesh',
+                'Patna': 'Bihar',
+                'Ludhiana': 'Punjab',
+                'Amritsar': 'Punjab',
+                'Chandigarh': 'Chandigarh',
+                'Srinagar': 'Jammu and Kashmir',
+                'Raipur': 'Chhattisgarh',
+                'Kochi': 'Kerala',
+                'Guwahati': 'Assam',
+                'Faridabad': 'Haryana',
+            }
+            
+            # Allow "Other" city to be selected with any state
+            if city != 'Other' and city in city_state_map:
+                expected_state = city_state_map[city]
+                if expected_state != state:
+                    self.add_error('city', ValidationError(f'{city} is not in {state}. {city} is located in {expected_state}.'))
+                    self.add_error('state', ValidationError(f'{city} is not in {state}. {city} is located in {expected_state}.'))
         
         # Combine address fields into single address string for database storage
         # Store in a non-field key to avoid Django rendering it as a form field
@@ -510,9 +562,10 @@ class DoctorSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password (min 12 chars, strong security)',
+            'placeholder': 'Password (min 6 chars)',
             'required': True,
-            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
+            'minlength': '6',
+            'title': 'Password must be at least 6 characters and include uppercase, lowercase, number, and special character.'
         })
     )
     

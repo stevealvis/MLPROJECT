@@ -22,7 +22,7 @@ urlpatterns = [
      path('admin/', admin.site.urls),
      path("", include("main_app.urls")),
      path("accounts/", include("accounts.urls")),
-     path("", include("chats.urls"))
+     path("", include("chats.urls")),
 ]
 
 # Serve media files during development

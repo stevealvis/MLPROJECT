@@ -90,6 +90,12 @@
     box-shadow: 0 0 20px rgba(142, 68, 173, 0.2);
   }
 
+  .radio-container .icon {
+    position: static;
+    transform: none;
+    flex-shrink: 0;
+  }
+
   .radio-btn {
     margin-right: 5px;
     accent-color: #8E44AD;
@@ -104,6 +110,62 @@
 
   .radio-label:hover {
     color: #8E44AD;
+  }
+
+  /* Enhanced Radio Buttons */
+  .gender-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .custom-radio {
+    position: relative;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .custom-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+
+  .radio-label-styled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid #FFB3B3;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #555;
+    height: 100%;
+    margin: 0;
+  }
+
+  .radio-label-styled:hover {
+    background: rgba(255, 179, 179, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .custom-radio input[type="radio"]:checked + .radio-label-styled {
+    background: linear-gradient(135deg, #8E44AD, #9B59B6);
+    border-color: #8E44AD;
+    color: white;
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .radio-label-styled i {
+    margin-right: 8px;
+    font-size: 1.1em;
   }
 
   .submit-btn {
@@ -230,9 +292,16 @@
     }
     
     .radio-container {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .radio-options {
+      gap: 15px;
+    }
+    
+    .radio-options ul {
+      gap: 15px;
+      flex-wrap: wrap;
     }
   }
 
@@ -367,12 +436,6 @@
       flex-direction: column;
       gap: 0;
     }
-    
-    .radio-container {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
 
     .form-section {
       padding: 20px 15px;
@@ -489,8 +552,22 @@
         
         <div class="radio-container">
           <i class="fa fa-venus-mars icon"></i>
-          <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            {{ form.gender }}
+          <div class="gender-options">
+            {% for radio in form.gender %}
+              <div class="custom-radio">
+                {{ radio.tag }}
+                <label for="{{ radio.id_for_label }}" class="radio-label-styled">
+                  {% if radio.choice_label == 'Male' %}
+                    <i class="fa fa-mars"></i>
+                  {% elif radio.choice_label == 'Female' %}
+                    <i class="fa fa-venus"></i>
+                  {% else %}
+                    <i class="fa fa-transgender"></i>
+                  {% endif %}
+                  {{ radio.choice_label }}
+                </label>
+              </div>
+            {% endfor %}
           </div>
         </div>
         {% if form.gender.errors %}
@@ -602,7 +679,7 @@
         }
       },
       password: {
-        minLength: 12,
+        minLength: 6,
         hasUpper: /[A-Z]/,
         hasLower: /[a-z]/,
         hasDigit: /[0-9]/,
@@ -611,7 +688,7 @@
         noCommon: /(password|admin|123|abc|qwerty|test|login)/,
         noRepeats: /(.)\1\1\1/,
         errorMessages: {
-          minLength: 'Password must be at least 12 characters long',
+          minLength: 'Password must be at least 6 characters long',
           hasUpper: 'Password must contain at least one uppercase letter',
           hasLower: 'Password must contain at least one lowercase letter',
           hasDigit: 'Password must contain at least one digit',
@@ -634,6 +711,79 @@
         }
       }
     };
+
+    // City-State mapping for validation
+    const cityStateMap = {
+      'Mumbai': 'Maharashtra',
+      'Pune': 'Maharashtra',
+      'Nagpur': 'Maharashtra',
+      'Nashik': 'Maharashtra',
+      'Thane': 'Maharashtra',
+      'Delhi': 'Delhi',
+      'Bangalore': 'Karnataka',
+      'Mysore': 'Karnataka',
+      'Hubli': 'Karnataka',
+      'Hyderabad': 'Telangana',
+      'Chennai': 'Tamil Nadu',
+      'Madurai': 'Tamil Nadu',
+      'Kolkata': 'West Bengal',
+      'Ahmedabad': 'Gujarat',
+      'Surat': 'Gujarat',
+      'Vadodara': 'Gujarat',
+      'Rajkot': 'Gujarat',
+      'Jaipur': 'Rajasthan',
+      'Jodhpur': 'Rajasthan',
+      'Lucknow': 'Uttar Pradesh',
+      'Kanpur': 'Uttar Pradesh',
+      'Agra': 'Uttar Pradesh',
+      'Varanasi': 'Uttar Pradesh',
+      'Ghaziabad': 'Uttar Pradesh',
+      'Meerut': 'Uttar Pradesh',
+      'Indore': 'Madhya Pradesh',
+      'Bhopal': 'Madhya Pradesh',
+      'Gwalior': 'Madhya Pradesh',
+      'Visakhapatnam': 'Andhra Pradesh',
+      'Vijayawada': 'Andhra Pradesh',
+      'Patna': 'Bihar',
+      'Ludhiana': 'Punjab',
+      'Amritsar': 'Punjab',
+      'Chandigarh': 'Chandigarh',
+      'Srinagar': 'Jammu and Kashmir',
+      'Raipur': 'Chhattisgarh',
+      'Kochi': 'Kerala',
+      'Guwahati': 'Assam',
+      'Faridabad': 'Haryana',
+      'Other': 'Other'
+    };
+
+    // Function to validate city-state relationship
+    function validateCityState(cityField, stateField) {
+      const city = cityField.value.trim();
+      const state = stateField.value.trim();
+      
+      if (!city || !state || city === '' || state === '') {
+        return { isValid: true };
+      }
+      
+      // Allow "Other" city to be selected with any state
+      if (city === 'Other') {
+        return { isValid: true };
+      }
+      
+      const expectedState = cityStateMap[city];
+      if (!expectedState) {
+        return { isValid: true }; // Unknown city, skip validation
+      }
+      
+      if (expectedState !== state) {
+        return {
+          isValid: false,
+          error: `${city} is not in ${state}. ${city} is located in ${expectedState}.`
+        };
+      }
+      
+      return { isValid: true };
+    }
 
     // Enhanced field validation function
     function validateField(field, ruleType) {
@@ -882,6 +1032,78 @@
       });
     }
     
+    // City-State validation
+    const cityField = document.querySelector('select[name="city"]');
+    const stateField = document.querySelector('select[name="state"]');
+    
+    const validateCityStateFields = () => {
+      if (!cityField || !stateField) return;
+      
+      const result = validateCityState(cityField, stateField);
+      
+      // Clear previous validation
+      const cityContainer = cityField.closest('.select-container');
+      const stateContainer = stateField.closest('.select-container');
+      
+      [cityContainer, stateContainer].forEach(container => {
+        if (container) {
+          container.classList.remove('error', 'success');
+        }
+      });
+      
+      // Remove existing errors (both Django .field-error and JS .validation-error)
+      [cityField, stateField].forEach(field => {
+        const formCol = field.closest('.form-col');
+        if (formCol) {
+          // Remove Django-rendered errors
+          const djangoErrors = formCol.querySelectorAll('.field-error');
+          djangoErrors.forEach(error => error.remove());
+          // Remove JavaScript validation errors
+          const jsErrors = formCol.querySelectorAll('.validation-error');
+          jsErrors.forEach(error => error.remove());
+        }
+      });
+      
+      if (!result.isValid) {
+        // Show error on both fields
+        if (cityContainer) cityContainer.classList.add('error');
+        if (stateContainer) stateContainer.classList.add('error');
+        
+        cityField.setCustomValidity(result.error);
+        stateField.setCustomValidity(result.error);
+        
+        // Show error message in both city and state fields for consistency with backend
+        const cityCol = cityField.closest('.form-col');
+        const stateCol = stateField.closest('.form-col');
+        
+        if (cityCol) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'validation-error field-error';
+          errorDiv.textContent = result.error;
+          cityCol.appendChild(errorDiv);
+        }
+        
+        if (stateCol) {
+          const errorDiv = document.createElement('div');
+          errorDiv.className = 'validation-error field-error';
+          errorDiv.textContent = result.error;
+          stateCol.appendChild(errorDiv);
+        }
+      } else {
+        // Clear errors if valid
+        cityField.setCustomValidity('');
+        stateField.setCustomValidity('');
+        
+        if (cityContainer) cityContainer.classList.add('success');
+        if (stateContainer) stateContainer.classList.add('success');
+      }
+    };
+    
+    if (cityField && stateField) {
+      cityField.addEventListener('change', validateCityStateFields);
+      stateField.addEventListener('change', validateCityStateFields);
+    }
+    
     // Age and DOB validation
     if (ageField && dobField) {
       const validateAgeDOB = () => {
@@ -972,6 +1194,16 @@
             if (!firstInvalid) firstInvalid = input;
           }
         });
+        
+        // Validate city-state relationship on form submission
+        if (cityField && stateField) {
+          const cityStateResult = validateCityState(cityField, stateField);
+          if (!cityStateResult.isValid) {
+            isValid = false;
+            validateCityStateFields();
+            if (!firstInvalid) firstInvalid = cityField;
+          }
+        }
         
         if (!isValid) {
           e.preventDefault();

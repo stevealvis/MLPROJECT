@@ -125,6 +125,62 @@
     color: #8E44AD;
   }
 
+  /* Enhanced Radio Buttons */
+  .gender-options {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .custom-radio {
+    position: relative;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .custom-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+
+  .radio-label-styled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border: 2px solid #FFB3B3;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #555;
+    height: 100%;
+    margin: 0;
+  }
+
+  .radio-label-styled:hover {
+    background: rgba(255, 179, 179, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .custom-radio input[type="radio"]:checked + .radio-label-styled {
+    background: linear-gradient(135deg, #8E44AD, #9B59B6);
+    border-color: #8E44AD;
+    color: white;
+    box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .radio-label-styled i {
+    margin-right: 8px;
+    font-size: 1.1em;
+  }
+
   .select-container {
     position: relative;
     background: rgba(255, 255, 255, 0.9);
@@ -407,8 +463,22 @@
 
         <div class="radio-container">
           <i class="fa fa-venus-mars icon"></i>
-          <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-            {{ form.gender }}
+          <div class="gender-options">
+            {% for radio in form.gender %}
+              <div class="custom-radio">
+                {{ radio.tag }}
+                <label for="{{ radio.id_for_label }}" class="radio-label-styled">
+                  {% if radio.choice_label == 'Male' %}
+                    <i class="fa fa-mars"></i>
+                  {% elif radio.choice_label == 'Female' %}
+                    <i class="fa fa-venus"></i>
+                  {% else %}
+                    <i class="fa fa-transgender"></i>
+                  {% endif %}
+                  {{ radio.choice_label }}
+                </label>
+              </div>
+            {% endfor %}
           </div>
         </div>
         {% if form.gender.errors %}
@@ -558,7 +628,7 @@
         }
       },
       password: {
-        minLength: 12,
+        minLength: 6,
         hasUpper: /[A-Z]/,
         hasLower: /[a-z]/,
         hasDigit: /[0-9]/,
@@ -567,7 +637,7 @@
         noCommon: /(password|admin|123|abc|qwerty|test|login)/,
         noRepeats: /(.)\1\1\1/,
         errorMessages: {
-          minLength: 'Password must be at least 12 characters long',
+          minLength: 'Password must be at least 6 characters long',
           hasUpper: 'Password must contain at least one uppercase letter',
           hasLower: 'Password must contain at least one lowercase letter',
           hasDigit: 'Password must contain at least one digit',

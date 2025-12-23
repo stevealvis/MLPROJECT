@@ -399,6 +399,61 @@
     display: block;
 }
 
+/* Gender Selection Styles */
+.gender-options {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.custom-radio {
+    position: relative;
+    flex: 1;
+    min-width: 80px;
+}
+
+.custom-radio input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.radio-label-styled {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #666;
+    width: 100%;
+}
+
+.custom-radio input[type="radio"]:checked + .radio-label-styled {
+    background: linear-gradient(45deg, #4ECDC4, #45B7D1);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3);
+    transform: translateY(-2px);
+}
+
+.radio-label-styled:hover {
+    border-color: #4ECDC4;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.custom-radio input[type="radio"]:checked + .radio-label-styled:hover {
+    background: linear-gradient(45deg, #4ECDC4, #45B7D1);
+}
+
 /* Animation classes */
 .fade-in-up {
     animation: fadeInUp 0.6s ease-out;
@@ -655,11 +710,26 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Gender</label>
-                                <select class="form-control" id="edit_gender">
-                                    <option value="Male" {% if duser.doctor.gender == "Male" %}selected{% endif %}>Male</option>
-                                    <option value="Female" {% if duser.doctor.gender == "Female" %}selected{% endif %}>Female</option>
-                                    <option value="Other" {% if duser.doctor.gender == "Other" %}selected{% endif %}>Other</option>
-                                </select>
+                                <div class="gender-options">
+                                    <div class="custom-radio">
+                                        <input type="radio" id="edit_gender_male" name="gender" value="Male" {% if duser.doctor.gender == "Male" %}checked{% endif %}>
+                                        <label for="edit_gender_male" class="radio-label-styled">
+                                            <i class="fas fa-mars"></i> Male
+                                        </label>
+                                    </div>
+                                    <div class="custom-radio">
+                                        <input type="radio" id="edit_gender_female" name="gender" value="Female" {% if duser.doctor.gender == "Female" %}checked{% endif %}>
+                                        <label for="edit_gender_female" class="radio-label-styled">
+                                            <i class="fas fa-venus"></i> Female
+                                        </label>
+                                    </div>
+                                    <div class="custom-radio">
+                                        <input type="radio" id="edit_gender_other" name="gender" value="Other" {% if duser.doctor.gender == "Other" %}checked{% endif %}>
+                                        <label for="edit_gender_other" class="radio-label-styled">
+                                            <i class="fas fa-transgender"></i> Other
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -723,7 +793,8 @@ function toggleEdit() {
 
 function saveProfile() {
     const name = document.getElementById('edit_name').value;
-    const gender = document.getElementById('edit_gender').value;
+    const genderElement = document.querySelector('input[name="gender"]:checked');
+    const gender = genderElement ? genderElement.value : "{{ duser.doctor.gender }}";
     const address = document.getElementById('edit_address').value;
     const mobile = document.getElementById('edit_mobile').value;
     const specialization = document.getElementById('edit_specialization').value;
