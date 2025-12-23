@@ -24,7 +24,6 @@
             crossorigin="anonymous"></script>
    
   <style>
-    /* Custom styles that complement the modern CSS */
     .img {
       position: relative;
       float: left;
@@ -102,7 +101,6 @@
       }
     }
 
-    /* Enhanced modal styling */
     .modal-content {
       border: none;
       border-radius: 20px;
@@ -119,7 +117,6 @@
       padding: 30px;
     }
 
-    /* Enhanced button styles */
     .btn-xs {
       padding: 8px 16px;
       font-size: 0.8rem;
@@ -137,6 +134,83 @@
       background: linear-gradient(45deg, #FF5252, #E53935);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+    }
+
+    .auth-modal-body {
+      padding: 30px 25px 40px;
+      text-align: center;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.9));
+    }
+
+    .auth-modal-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .auth-modal-subtitle {
+      font-size: 0.95rem;
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .auth-role-grid {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .auth-role-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.03);
+      text-decoration: none;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      min-width: 150px;
+    }
+
+    .auth-role-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 35px rgba(0, 0, 0, 0.15);
+      border-color: var(--accent-bright);
+      text-decoration: none;
+    }
+
+    .auth-role-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+      border: 3px solid rgba(255, 255, 255, 0.9);
+    }
+
+    .auth-role-label {
+      margin-top: 12px;
+      font-weight: 600;
+      color: #333;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 576px) {
+      .auth-modal-body {
+        padding: 24px 16px 32px;
+      }
+
+      .auth-role-img {
+        width: 100px;
+        height: 100px;
+      }
     }
   </style>
 
@@ -260,38 +334,24 @@
 <div class="modal fade bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
-     
-  <center>
-    <h1>Sign-In  As</h1>
-    </center>
-  <br><br>
-  
-  <center>
-  <form>
-      <div class="container mt-5 mb-5">
-   <div class="row">
-      <div class="col">
-         <a href="{% url 'sign_in_admin' %}">
-  <img  alt="admin" src="{% static 'homepage/admin.PNG' %}"  class="img">
-  </a>
-      </div>
-  
-      <div class="col">
-  <a href="{% url 'sign_in_doctor' %}">
-  <img  alt="doctor" src="{% static 'homepage/doctor.PNG' %}"  class="img">
-  </a>
-      </div>
-  
-      <div class="col">
-  <a href="{% url 'sign_in_patient' %}">
-  <img  alt="patient" src="{% static 'homepage/patient.PNG' %}"  class="img">
-  </a>
-      </div>
-    </div>
-    </div>
-  </form>
-  </center>
-  
+        <div class="auth-modal-body">
+          <h1 class="auth-modal-title">Sign-In As</h1>
+          <p class="auth-modal-subtitle">Choose how you want to continue</p>
+          <div class="auth-role-grid">
+            <a href="{% url 'sign_in_admin' %}" class="auth-role-card">
+              <img alt="admin" src="{% static 'homepage/admin.PNG' %}" class="auth-role-img">
+              <span class="auth-role-label">Admin</span>
+            </a>
+            <a href="{% url 'sign_in_doctor' %}" class="auth-role-card">
+              <img alt="doctor" src="{% static 'homepage/doctor.PNG' %}" class="auth-role-img">
+              <span class="auth-role-label">Doctor</span>
+            </a>
+            <a href="{% url 'sign_in_patient' %}" class="auth-role-card">
+              <img alt="patient" src="{% static 'homepage/patient.PNG' %}" class="auth-role-img">
+              <span class="auth-role-label">Patient</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
