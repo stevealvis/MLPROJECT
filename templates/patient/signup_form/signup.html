@@ -11,9 +11,9 @@
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
     backdrop-filter: blur(20px);
     border-radius: 25px;
-    padding: 50px;
+    padding: 40px;
     margin: 40px auto;
-    max-width: 600px;
+    max-width: 800px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.3);
   }
@@ -283,6 +283,117 @@
     transition: all 0.3s ease;
     transform: translateX(-50%);
   }
+
+  /* Select Field Styling */
+  .select-container {
+    position: relative;
+    margin-bottom: 25px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    border: 2px solid #FFB3B3;
+    transition: all 0.3s ease;
+  }
+
+  .select-container:focus-within {
+    border-color: #8E44AD;
+    box-shadow: 0 0 20px rgba(142, 68, 173, 0.2);
+    transform: translateY(-2px);
+  }
+
+  .select-field {
+    width: 100%;
+    padding: 15px 15px 15px 50px;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #333;
+    border-radius: 13px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238E44AD' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 20px;
+    cursor: pointer;
+  }
+
+  .select-field:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Form Section Styling */
+  .form-section {
+    margin-bottom: 35px;
+    padding: 25px;
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 179, 179, 0.3);
+    position: relative;
+  }
+
+  .form-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #8E44AD;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-section-title::before {
+    content: "";
+    width: 4px;
+    height: 25px;
+    background: linear-gradient(45deg, #8E44AD, #E67E22);
+    border-radius: 2px;
+  }
+
+  /* Enhanced responsive design */
+  @media (max-width: 768px) {
+    .signup-container {
+      padding: 30px 20px;
+      margin: 20px;
+      max-width: none;
+    }
+    
+    .signup-title {
+      font-size: 2rem;
+    }
+    
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+    
+    .radio-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .form-section {
+      padding: 20px 15px;
+      margin-bottom: 25px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .signup-container {
+      padding: 20px 15px;
+    }
+    
+    .signup-title {
+      font-size: 1.5rem;
+    }
+    
+    .submit-btn {
+      padding: 12px 30px;
+      font-size: 1rem;
+    }
+  }
 </style>
 
 {% endblock %}
@@ -306,129 +417,161 @@
         {% endfor %}
       </center>
 
-      <div class="form-row">
-        <div class="form-col">
-          <div class="input-container">
-            <i class="fa fa-user icon"></i>
-            {{ form.username }}
-            <span class="focus-border"></span>
+      <!-- Personal Information Section -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <i class="fa fa-user"></i>
+          Personal Information
+        </div>
+        
+        <div class="form-row">
+          <div class="form-col">
+            <div class="input-container">
+              <i class="fa fa-user icon"></i>
+              {{ form.username }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.username.errors %}
+              <div class="field-error">{{ form.username.errors.0 }}</div>
+            {% endif %}
           </div>
-          {% if form.username.errors %}
-            <div class="field-error">{{ form.username.errors.0 }}</div>
-          {% endif %}
-        </div>
-        <div class="form-col">
-          <div class="input-container">
-            <i class="fa fa-user icon"></i>
-            {{ form.name }}
-            <span class="focus-border"></span>
+          <div class="form-col">
+            <div class="input-container">
+              <i class="fa fa-user icon"></i>
+              {{ form.name }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.name.errors %}
+              <div class="field-error">{{ form.name.errors.0 }}</div>
+            {% endif %}
           </div>
-          {% if form.name.errors %}
-            <div class="field-error">{{ form.name.errors.0 }}</div>
-          {% endif %}
         </div>
-      </div>
 
-      <div class="input-container">
-        <i class="fa fa-envelope icon"></i>
-        {{ form.email }}
-        <span class="focus-border"></span>
-      </div>
-      {% if form.email.errors %}
-        <div class="field-error">{{ form.email.errors.0 }}</div>
-      {% endif %}
+        <div class="input-container">
+          <i class="fa fa-envelope icon"></i>
+          {{ form.email }}
+          <span class="focus-border"></span>
+        </div>
+        {% if form.email.errors %}
+          <div class="field-error">{{ form.email.errors.0 }}</div>
+        {% endif %}
 
-      <div class="form-row">
-        <div class="form-col">
-          <div class="input-container">
-            <i class="fa fa-calendar icon"></i>
-            {{ form.dob }}
-            <span class="focus-border"></span>
+        <div class="form-row">
+          <div class="form-col">
+            <div class="input-container">
+              <i class="fa fa-calendar icon"></i>
+              {{ form.dob }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.dob.errors %}
+              <div class="field-error">{{ form.dob.errors.0 }}</div>
+            {% endif %}
           </div>
-          {% if form.dob.errors %}
-            <div class="field-error">{{ form.dob.errors.0 }}</div>
-          {% endif %}
-        </div>
-        <div class="form-col">
-          <div class="input-container">
-            <i class="fa fa-birthday-cake icon"></i>
-            {{ form.age }}
-            <span class="focus-border"></span>
+          <div class="form-col">
+            <div class="input-container">
+              <i class="fa fa-birthday-cake icon"></i>
+              {{ form.age }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.age.errors %}
+              <div class="field-error">{{ form.age.errors.0 }}</div>
+            {% endif %}
           </div>
-          {% if form.age.errors %}
-            <div class="field-error">{{ form.age.errors.0 }}</div>
-          {% endif %}
         </div>
       </div>
 
-      <div class="radio-container">
-        <i class="fa fa-venus-mars icon"></i>
-        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-          {{ form.gender }}
+      <!-- Demographics Section -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <i class="fa fa-venus-mars"></i>
+          Demographics
         </div>
-      </div>
-      {% if form.gender.errors %}
-        <div class="field-error">{{ form.gender.errors.0 }}</div>
-      {% endif %}
-
-      <div class="input-container">
-        <i class="fa fa-address-book icon"></i>
-        {{ form.address_line }}
-        <span class="focus-border"></span>
-      </div>
-      {% if form.address_line.errors %}
-        <div class="field-error">{{ form.address_line.errors.0 }}</div>
-      {% endif %}
-
-      <div class="form-row">
-        <div class="form-col">
-          <div class="select-container">
-            <i class="fa fa-map-marker icon"></i>
-            {{ form.city }}
-            <span class="focus-border"></span>
+        
+        <div class="radio-container">
+          <i class="fa fa-venus-mars icon"></i>
+          <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            {{ form.gender }}
           </div>
-          {% if form.city.errors %}
-            <div class="field-error">{{ form.city.errors.0 }}</div>
-          {% endif %}
         </div>
-        <div class="form-col">
-          <div class="select-container">
-            <i class="fa fa-map icon"></i>
-            {{ form.state }}
-            <span class="focus-border"></span>
+        {% if form.gender.errors %}
+          <div class="field-error">{{ form.gender.errors.0 }}</div>
+        {% endif %}
+
+        <div class="input-container">
+          <i class="fa fa-phone icon"></i>
+          {{ form.mobile_no }}
+          <span class="focus-border"></span>
+        </div>
+        {% if form.mobile_no.errors %}
+          <div class="field-error">{{ form.mobile_no.errors.0 }}</div>
+        {% endif %}
+      </div>
+
+      <!-- Address Section -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <i class="fa fa-address-book"></i>
+          Address Information
+        </div>
+        
+        <div class="input-container">
+          <i class="fa fa-address-book icon"></i>
+          {{ form.address_line }}
+          <span class="focus-border"></span>
+        </div>
+        {% if form.address_line.errors %}
+          <div class="field-error">{{ form.address_line.errors.0 }}</div>
+        {% endif %}
+
+        <div class="form-row">
+          <div class="form-col">
+            <div class="select-container">
+              <i class="fa fa-map-marker icon"></i>
+              {{ form.city }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.city.errors %}
+              <div class="field-error">{{ form.city.errors.0 }}</div>
+            {% endif %}
           </div>
-          {% if form.state.errors %}
-            <div class="field-error">{{ form.state.errors.0 }}</div>
-          {% endif %}
+          <div class="form-col">
+            <div class="select-container">
+              <i class="fa fa-map icon"></i>
+              {{ form.state }}
+              <span class="focus-border"></span>
+            </div>
+            {% if form.state.errors %}
+              <div class="field-error">{{ form.state.errors.0 }}</div>
+            {% endif %}
+          </div>
         </div>
       </div>
 
-      <div class="input-container">
-        <i class="fa fa-phone icon"></i>
-        {{ form.mobile_no }}
-        <span class="focus-border"></span>
-      </div>
-      {% if form.mobile_no.errors %}
-        <div class="field-error">{{ form.mobile_no.errors.0 }}</div>
-      {% endif %}
+      <!-- Security Section -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <i class="fa fa-shield"></i>
+          Security
+        </div>
+        
+        <div class="input-container">
+          <i class="fa fa-lock icon"></i>
+          {{ form.password }}
+          <span class="focus-border"></span>
+        </div>
+        {% if form.password.errors %}
+          <div class="field-error">{{ form.password.errors.0 }}</div>
+        {% endif %}
 
-      <div class="input-container">
-        <i class="fa fa-lock icon"></i>
-        {{ form.password }}
-        <span class="focus-border"></span>
+        <div class="input-container">
+          <i class="fa fa-check-circle icon"></i>
+          {{ form.password1 }}
+          <span class="focus-border"></span>
+        </div>
+        {% if form.password1.errors %}
+          <div class="field-error">{{ form.password1.errors.0 }}</div>
+        {% endif %}
       </div>
-      {% if form.password.errors %}
-        <div class="field-error">{{ form.password.errors.0 }}</div>
-      {% endif %}
-
-      <div class="input-container">
-        <i class="fa fa-check-circle icon"></i>
-        {{ form.password1 }}
-        <span class="focus-border"></span>
-      </div>
-      {% if form.password1.errors %}
-        <div class="field-error">{{ form.password1.errors.0 }}</div>
-      {% endif %}
 
       <button type="submit" class="btn submit-btn">
         <i class="fa fa-user-plus"></i> Register Account
@@ -501,9 +644,9 @@
       const errors = [];
       
       // Clear previous validation states
-      const inputContainer = field.closest('.input-container');
-      if (inputContainer) {
-        inputContainer.classList.remove('error', 'success');
+      const containerElement = field.closest('.input-container') || field.closest('.select-container');
+      if (containerElement) {
+        containerElement.classList.remove('error', 'success');
       }
       field.style.borderColor = '#FFB3B3';
       field.setCustomValidity('');
@@ -594,17 +737,17 @@
       }
       
       // Update field appearance
-      const inputContainer = field.closest('.input-container');
+      const updatedContainerElement = field.closest('.input-container') || field.closest('.select-container');
       if (isValid) {
-        if (inputContainer) {
-          inputContainer.classList.remove('error');
-          inputContainer.classList.add('success');
+        if (updatedContainerElement) {
+          updatedContainerElement.classList.remove('error');
+          updatedContainerElement.classList.add('success');
         }
         field.style.borderColor = '#28a745';
       } else {
-        if (inputContainer) {
-          inputContainer.classList.remove('success');
-          inputContainer.classList.add('error');
+        if (updatedContainerElement) {
+          updatedContainerElement.classList.remove('success');
+          updatedContainerElement.classList.add('error');
         }
         field.style.borderColor = '#dc3545';
         field.setCustomValidity(errors[0]);
@@ -661,10 +804,10 @@
           
           if (username.length >= 3 && password.includes(username)) {
             this.setCustomValidity('Password cannot contain your username');
-            const inputContainer = this.closest('.input-container');
-            if (inputContainer) {
-              inputContainer.classList.add('error');
-              inputContainer.classList.remove('success');
+            const passwordContainer = this.closest('.input-container');
+            if (passwordContainer) {
+              passwordContainer.classList.add('error');
+              passwordContainer.classList.remove('success');
             }
             this.style.borderColor = '#dc3545';
             
@@ -684,12 +827,12 @@
     // Password confirmation validation
     if (password1Field && passwordField) {
       password1Field.addEventListener('input', function() {
-        const inputContainer = this.closest('.input-container');
+        const confirmContainer = this.closest('.input-container');
         if (passwordField.value !== this.value) {
           this.setCustomValidity('Passwords do not match');
-          if (inputContainer) {
-            inputContainer.classList.add('error');
-            inputContainer.classList.remove('success');
+          if (confirmContainer) {
+            confirmContainer.classList.add('error');
+            confirmContainer.classList.remove('success');
           }
           this.style.borderColor = '#dc3545';
           
@@ -703,9 +846,9 @@
           existingError.textContent = 'Passwords do not match';
         } else {
           this.setCustomValidity('');
-          if (inputContainer) {
-            inputContainer.classList.remove('error');
-            inputContainer.classList.add('success');
+          if (confirmContainer) {
+            confirmContainer.classList.remove('error');
+            confirmContainer.classList.add('success');
           }
           this.style.borderColor = '#28a745';
           
