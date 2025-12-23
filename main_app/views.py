@@ -622,57 +622,47 @@ def scan_image(request):
                     'message': 'Please upload a clear image of skin disease/lesion. ' + skin_validation['reason']
                 }, status=400)
             
-            # Preprocess image for model
-            # Resize to standard size (adjust based on your model requirements)
-            img = img.convert('RGB')  # Ensure RGB format
-            img = img.resize((224, 224))  # Common size for CNN models
+            img = img.convert('RGB')
+            img = img.resize((224, 224))
             
-            # Convert to numpy array
             img_array = np.array(img)
-            img_array = img_array / 255.0  # Normalize to [0, 1]
-            img_array = np.expand_dims(img_array, axis=0)  # Add batch dimension
+            img_batch = img_array / 255.0
+            img_batch = np.expand_dims(img_batch, axis=0)
             
-            # Run CNN model if available, else fallback to symptom-based model with basic image analysis
+            # Run CNN model if available, else fallback to basic image analysis
             if image_model and image_labels:
-                preds = image_model.predict(img_array)
+                preds = image_model.predict(img_batch)
                 idx = int(np.argmax(preds))
                 predicted_disease = image_labels[idx] if idx < len(image_labels) else "Skin Condition"
                 confidence = float(np.max(preds)) * 100
             else:
-                # Enhanced fallback prediction when CNN is not available
-                # Use basic image analysis to provide more specific predictions
                 try:
-                    # Basic image characteristics analysis
                     img_array_flat = img_array.flatten()
                     
-                    # Simple color analysis
-                    avg_color = np.mean(img_array, axis=(0, 1))
-                    red_ratio = avg_color[0] / (avg_color[1] + avg_color[2] + 1)
-                    blue_ratio = avg_color[2] / (avg_color[0] + avg_color[1] + 1)
+                    avg_color = np.mean(img_array, axis=(0, 1)) / 255.0
+                    red_ratio = float(avg_color[0]) / float(avg_color[1] + avg_color[2] + 1e-6)
+                    blue_ratio = float(avg_color[2]) / float(avg_color[0] + avg_color[1] + 1e-6)
                     
-                    # Image brightness analysis
                     brightness = np.mean(img_array)
                     
-                    # Simple pattern detection based on color and brightness
-                    if red_ratio > 1.5:  # Reddish skin
+                    if red_ratio > 1.5:
                         if brightness < 100:
                             predicted_disease = "Skin Lesion - Possible Infection"
                             confidence = 75.2
                         else:
                             predicted_disease = "Erythema (Red Skin)"
                             confidence = 68.4
-                    elif blue_ratio > 1.2:  # Bluish tint
+                    elif blue_ratio > 1.2:
                         predicted_disease = "Cyanosis or Blue Discoloration"
                         confidence = 71.8
-                    elif brightness < 80:  # Dark areas
+                    elif brightness < 80:
                         predicted_disease = "Melanocytic Lesion"
                         confidence = 72.6
-                    elif brightness > 180:  # Very bright/white areas
+                    elif brightness > 180:
                         predicted_disease = "Hypopigmented Lesion"
                         confidence = 69.1
                     else:
-                        # General skin conditions based on color distribution
-                        if np.std(img_array) > 30:  # High variation in colors
+                        if np.std(img_array) > 30:
                             predicted_disease = "Multicolored Skin Condition"
                             confidence = 74.3
                         else:
@@ -1013,5 +1003,4 @@ def chat_messages(request):
 
 
 #-----------------------------chatting system ---------------------------------------------------
-
 
