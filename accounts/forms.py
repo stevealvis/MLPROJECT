@@ -2,62 +2,109 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, EmailValidator, MinLengthValidator, MaxLengthValidator
 from django.contrib.auth.models import User
-from django.utils.html import escape
-from .models import Patient, Doctor, UserProfile
 import re
-import html
 from datetime import date
 
-# Security-focused custom validators
-def sanitize_input(value):
-    """OWASP A03: Injection Prevention - Input Sanitization"""
-    if value is None:
-        return value
-    # Remove null bytes and control characters
-    sanitized = ''.join(char for char in str(value) if ord(char) >= 32 or char in ['\n', '\r', '\t'])
-    # HTML escape to prevent XSS
-    return html.escape(sanitized.strip())
+# Indian States List
+INDIAN_STATES = [
+    ('', 'Select State'),
+    ('Andhra Pradesh', 'Andhra Pradesh'),
+    ('Arunachal Pradesh', 'Arunachal Pradesh'),
+    ('Assam', 'Assam'),
+    ('Bihar', 'Bihar'),
+    ('Chhattisgarh', 'Chhattisgarh'),
+    ('Goa', 'Goa'),
+    ('Gujarat', 'Gujarat'),
+    ('Haryana', 'Haryana'),
+    ('Himachal Pradesh', 'Himachal Pradesh'),
+    ('Jharkhand', 'Jharkhand'),
+    ('Karnataka', 'Karnataka'),
+    ('Kerala', 'Kerala'),
+    ('Madhya Pradesh', 'Madhya Pradesh'),
+    ('Maharashtra', 'Maharashtra'),
+    ('Manipur', 'Manipur'),
+    ('Meghalaya', 'Meghalaya'),
+    ('Mizoram', 'Mizoram'),
+    ('Nagaland', 'Nagaland'),
+    ('Odisha', 'Odisha'),
+    ('Punjab', 'Punjab'),
+    ('Rajasthan', 'Rajasthan'),
+    ('Sikkim', 'Sikkim'),
+    ('Tamil Nadu', 'Tamil Nadu'),
+    ('Telangana', 'Telangana'),
+    ('Tripura', 'Tripura'),
+    ('Uttar Pradesh', 'Uttar Pradesh'),
+    ('Uttarakhand', 'Uttarakhand'),
+    ('West Bengal', 'West Bengal'),
+    ('Andaman and Nicobar Islands', 'Andaman and Nicobar Islands'),
+    ('Chandigarh', 'Chandigarh'),
+    ('Dadra and Nagar Haveli and Daman and Diu', 'Dadra and Nagar Haveli and Daman and Diu'),
+    ('Delhi', 'Delhi'),
+    ('Jammu and Kashmir', 'Jammu and Kashmir'),
+    ('Ladakh', 'Ladakh'),
+    ('Lakshadweep', 'Lakshadweep'),
+    ('Puducherry', 'Puducherry'),
+]
 
+# Major Indian Cities List
+INDIAN_CITIES = [
+    ('', 'Select City'),
+    ('Mumbai', 'Mumbai'),
+    ('Delhi', 'Delhi'),
+    ('Bangalore', 'Bangalore'),
+    ('Hyderabad', 'Hyderabad'),
+    ('Chennai', 'Chennai'),
+    ('Kolkata', 'Kolkata'),
+    ('Pune', 'Pune'),
+    ('Ahmedabad', 'Ahmedabad'),
+    ('Jaipur', 'Jaipur'),
+    ('Surat', 'Surat'),
+    ('Lucknow', 'Lucknow'),
+    ('Kanpur', 'Kanpur'),
+    ('Nagpur', 'Nagpur'),
+    ('Indore', 'Indore'),
+    ('Thane', 'Thane'),
+    ('Bhopal', 'Bhopal'),
+    ('Visakhapatnam', 'Visakhapatnam'),
+    ('Patna', 'Patna'),
+    ('Vadodara', 'Vadodara'),
+    ('Ghaziabad', 'Ghaziabad'),
+    ('Ludhiana', 'Ludhiana'),
+    ('Agra', 'Agra'),
+    ('Nashik', 'Nashik'),
+    ('Faridabad', 'Faridabad'),
+    ('Meerut', 'Meerut'),
+    ('Rajkot', 'Rajkot'),
+    ('Varanasi', 'Varanasi'),
+    ('Srinagar', 'Srinagar'),
+    ('Amritsar', 'Amritsar'),
+    ('Chandigarh', 'Chandigarh'),
+    ('Jodhpur', 'Jodhpur'),
+    ('Raipur', 'Raipur'),
+    ('Kochi', 'Kochi'),
+    ('Gwalior', 'Gwalior'),
+    ('Vijayawada', 'Vijayawada'),
+    ('Madurai', 'Madurai'),
+    ('Guwahati', 'Guwahati'),
+    ('Hubli', 'Hubli'),
+    ('Mysore', 'Mysore'),
+    ('Other', 'Other'),
+]
+
+# Custom validators
 def validate_username(value):
-    """OWASP A03: Injection & A07: Authentication - Enhanced username validation"""
-    # Input sanitization first
-    sanitized_value = sanitize_input(value)
-    
-    if len(sanitized_value) < 3:
-        raise ValidationError('Username must be at least 3 characters long.')
-    if len(sanitized_value) > 30:
-        raise ValidationError('Username cannot be more than 30 characters long.')
-    
-    # Strict character whitelist (OWASP A03: Injection prevention)
-    if not re.match(r'^[a-z0-9_.]+$', sanitized_value):
-        raise ValidationError('Username can only contain lowercase letters, numbers, underscores, and dots.')
-    
-    # Username cannot start or end with underscore or dot
-    if sanitized_value.startswith(('_', '.')) or sanitized_value.endswith(('_', '.')):
-        raise ValidationError('Username cannot start or end with underscore or dot.')
-    
-    # Cannot have consecutive underscores or dots
-    if '__' in sanitized_value or '..' in sanitized_value:
-        raise ValidationError('Username cannot contain consecutive underscores or dots.')
-    
-    # Reserved usernames (OWASP A07: Authentication Failures prevention)
-    reserved_usernames = ['admin', 'administrator', 'root', 'system', 'support', 'help', 'info', 'contact', 'test', 'demo']
-    if sanitized_value in reserved_usernames:
-        raise ValidationError('This username is reserved and cannot be used.')
-    
-    # Check for SQL injection patterns (OWASP A03: Injection prevention)
-    sql_patterns = ['union', 'select', 'insert', 'delete', 'update', 'drop', 'alter', 'create', 'exec', 'execute', '--', ';', '/*', '*/']
-    for pattern in sql_patterns:
-        if pattern in sanitized_value.lower():
-            raise ValidationError('Username contains prohibited patterns.')
-    
-    # Check for XSS patterns (OWASP A03: Injection prevention)
-    xss_patterns = ['<script', 'javascript:', 'vbscript:', 'onload', 'onerror', 'onclick', '<iframe', '<object', '<embed']
-    for pattern in xss_patterns:
-        if pattern.lower() in sanitized_value.lower():
-            raise ValidationError('Username contains prohibited characters.')
-    
-    return sanitized_value
+    """Validate username format"""
+    # Must start with a letter
+    if not value or not value[0].isalpha():
+        raise ValidationError('Username must start with a letter.')
+    # Only letters and numbers allowed (no spaces or symbols)
+    if not re.match(r'^[a-zA-Z][a-zA-Z0-9]*$', value):
+        raise ValidationError('Username can only contain letters and numbers. No spaces or symbols allowed.')
+    # Length must be 5-20 characters
+    if len(value) < 5:
+        raise ValidationError('Username must be at least 5 characters long.')
+    if len(value) > 20:
+        raise ValidationError('Username cannot be more than 20 characters long.')
 
 def validate_mobile_number(value):
     """Validate mobile number format"""
@@ -69,218 +116,66 @@ def validate_mobile_number(value):
         raise ValidationError('Mobile number must start with 6, 7, 8, or 9.')
 
 def validate_registration_number(value):
-    """OWASP A03: Injection - Medical registration number validation with security checks"""
-    # Input sanitization
-    sanitized_value = sanitize_input(value)
-    # Convert to uppercase for consistency
-    sanitized_value = sanitized_value.upper()
-    
-    if len(sanitized_value) < 6:
+    """Validate medical registration number format"""
+    if len(value) < 6:
         raise ValidationError('Registration number must be at least 6 characters long.')
-    if len(sanitized_value) > 20:
+    if len(value) > 20:
         raise ValidationError('Registration number cannot be more than 20 characters long.')
-    
-    # Must contain both letters and numbers
-    if not re.search(r'[A-Z]', sanitized_value) or not re.search(r'[0-9]', sanitized_value):
-        raise ValidationError('Registration number must contain both letters and numbers.')
-    
-    # OWASP A03: Strict character whitelist
-    if not re.match(r'^[A-Z0-9\-]+$', sanitized_value):
-        raise ValidationError('Registration number can only contain letters, numbers, and hyphens.')
-    
-    # Check for excessive repeated characters
-    if re.search(r'(.)\1{3,}', sanitized_value):
-        raise ValidationError('Registration number cannot contain excessive repeated characters.')
-    
-    # OWASP A03: Check for SQL injection patterns
-    sql_patterns = ['union', 'select', 'insert', 'delete', 'update', 'drop', 'alter', 'create', 'exec', 'execute']
-    for pattern in sql_patterns:
-        if pattern in sanitized_value.lower():
-            raise ValidationError('Registration number contains prohibited patterns.')
-    
-    return sanitized_value
-
-def validate_medical_council(value):
-    """OWASP A03: Injection - State Medical Council validation with security checks"""
-    # Input sanitization
-    sanitized_value = sanitize_input(value)
-    
-    if len(sanitized_value) < 3:
-        raise ValidationError('State Medical Council name must be at least 3 characters long.')
-    if len(sanitized_value) > 50:
-        raise ValidationError('State Medical Council name cannot be more than 50 characters long.')
-    
-    # OWASP A03: Check for valid characters (letters, spaces, hyphens)
-    if not re.match(r'^[a-zA-Z\s\-]+$', sanitized_value):
-        raise ValidationError('State Medical Council name can only contain letters, spaces, and hyphens.')
-    
-    # Validate against known Indian Medical Councils
-    known_councils = [
-        'andhra medical council', 'arunachal pradesh medical council', 'assam medical council',
-        'bihar medical council', 'chhattisgarh medical council', 'goa medical council',
-        'gujarat medical council', 'haryana medical council', 'himachal pradesh medical council',
-        'jharkhand medical council', 'karnataka medical council', 'kerala medical council',
-        'madhya pradesh medical council', 'maharashtra medical council', 'manipur medical council',
-        'meghalaya medical council', 'mizoram medical council', 'nagaland medical council',
-        'odisha medical council', 'punjab medical council', 'rajasthan medical council',
-        'sikkim medical council', 'tamil nadu medical council', 'telangana medical council',
-        'tripura medical council', 'uttar pradesh medical council', 'uttarakhand medical council',
-        'west bengal medical council', 'delhi medical council', 'puducherry medical council'
-    ]
-    
-    council_lower = sanitized_value.lower()
-    is_valid_council = False
-    for council in known_councils:
-        if council in council_lower or council_lower in council:
-            is_valid_council = True
-            break
-    
-    # Allow custom councils but with validation
-    if not is_valid_council and len(council_lower.split()) < 2:
-        raise ValidationError('Please provide a valid State Medical Council name.')
-    
-    return sanitized_value
-
-def validate_qualification(value):
-    """OWASP A03: Injection - Medical qualification validation with security checks"""
-    # Input sanitization
-    sanitized_value = sanitize_input(value)
-    
-    if len(sanitized_value) < 2:
-        raise ValidationError('Qualification must be at least 2 characters long.')
-    if len(sanitized_value) > 50:
-        raise ValidationError('Qualification cannot be more than 50 characters long.')
-    
-    # OWASP A03: Check for valid characters
-    if not re.match(r'^[a-zA-Z\s\.\,\(\)]+$', sanitized_value):
-        raise ValidationError('Qualification can only contain letters, spaces, dots, commas, and parentheses.')
-    
-    # Validate against known medical qualifications
-    known_qualifications = [
-        'mbbs', 'bds', 'bams', 'bhms', 'bums', 'md', 'ms', 'dm', 'mch', 'dnb', 'dgo', 'dch', 'dortho',
-        'dcard', 'dneurology', 'dsurgery', 'danaesthesia', 'dophthalmology', 'dpsychiatry',
-        'ddermatology', 'dgastroenterology', 'dnephrology', 'dendocrinology', 'drheumatology',
-        'doncology', 'dcardiology', 'dneurology', 'dpediatrics', 'dgynaecology', 'dorthopaedics',
-        'dent', 'dophthalmology', 'dpsychiatry', 'danaesthesia', 'dradiology', 'dpathology',
-        'dmicrobiology', 'dbiochemistry', 'dpharmacology', 'dphysiology', 'danatomy', 'dforensic'
-    ]
-    
-    qual_lower = sanitized_value.lower()
-    is_valid_qual = False
-    for qual in known_qualifications:
-        if qual in qual_lower:
-            is_valid_qual = True
-            break
-    
-    # Allow other medical qualifications but validate format
-    if not is_valid_qual:
-        # OWASP A03: Check for common medical degree patterns
-        if not re.search(r'\b(mbbs|bds|m\.d|m\.s|d\.m|m\.ch|d\.n\.b|b\.a\.m\.s|b\.h\.m\.s)\b', qual_lower):
-            raise ValidationError('Please provide a valid medical qualification.')
-    
-    return sanitized_value
 
 def validate_password_strength(value):
-    """OWASP A07: Authentication Failures - Enhanced password validation"""
-    errors = []
-    
-    # OWASP A07: Strong password requirements
+    """Validate password strength with enhanced security"""
     if len(value) < 12:
-        errors.append('Password must be at least 12 characters long.')
-    elif len(value) > 128:
-        errors.append('Password cannot be more than 128 characters long.')
-    
-    if not re.search(r'[a-z]', value):
-        errors.append('Password must contain at least one lowercase letter.')
+        raise ValidationError('Password must be at least 12 characters long for enhanced security.')
     
     if not re.search(r'[A-Z]', value):
-        errors.append('Password must contain at least one uppercase letter.')
+        raise ValidationError('Password must contain at least one uppercase letter (A-Z).')
+    
+    if not re.search(r'[a-z]', value):
+        raise ValidationError('Password must contain at least one lowercase letter (a-z).')
     
     if not re.search(r'\d', value):
-        errors.append('Password must contain at least one number.')
+        raise ValidationError('Password must contain at least one digit (0-9).')
     
-    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'"\\|,.<>\/?]', value):
-        errors.append('Password must contain at least one special character.')
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>_~`\-=+\[\]{};:|,./<>?]', value):
+        raise ValidationError('Password must contain at least one special character.')
     
-    # OWASP A07: Pattern detection for common attack vectors
-    if re.search(r'(.)\1{2,}', value):  # Three or more repeated characters
-        errors.append('Password cannot contain three or more consecutive identical characters.')
-    
-    # OWASP A07: Sequential pattern detection
-    sequential_patterns = [
-        '0123', '1234', '2345', '3456', '4567', '5678', '6789', '7890',
-        'abcd', 'bcde', 'cdef', 'defg', 'efgh', 'fghi', 'ghij', 'hijk', 
-        'ijkl', 'jklm', 'klmn', 'lmno', 'mnop', 'nopq', 'opqr', 'pqrs', 
-        'qrst', 'rstu', 'stuv', 'tuvw', 'uvwx', 'vwxy', 'wxyz'
+    # Check for common weak patterns (more specific to avoid false positives)
+    common_weak_patterns = [
+        '123456', 'password123', 'admin123', 'qwerty', 'abc123',
+        'welcome123', 'test123', 'login123', '123456789'
     ]
-    for pattern in sequential_patterns:
-        if pattern in value.lower():
-            errors.append(f'Password cannot contain sequential patterns like {pattern}.')
-            break
     
-    # OWASP A07: Common password list check (simplified version)
-    # In production, use a comprehensive password dictionary
-    common_passwords = [
-        'password', 'password1', 'password123', '123456', '12345678', '123456789',
-        'qwerty', 'qwerty123', 'asdf', 'asdf123', 'zxcv', 'zxcv123',
-        'admin', 'admin123', 'user', 'user123', 'login', 'login123',
-        'welcome', 'welcome123', 'monkey', 'dragon', 'letmein',
-        'abc123', '111111', '123123', 'iloveyou', 'football', 'baseball',
-        'shadow', 'master', 'superman', 'hello', 'freedom'
-    ]
-    for common_pass in common_passwords:
-        if common_pass in value.lower():
-            errors.append(f'Password cannot be a common password like "{common_pass}".')
-            break
+    password_lower = value.lower()
+    for pattern in common_weak_patterns:
+        if pattern in password_lower:
+            raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
     
-    # OWASP A07: Check for date patterns (birth years, etc.)
-    current_year = date.today().year
-    for year in range(current_year - 100, current_year + 1):
-        if str(year) in value:
-            errors.append('Password cannot contain years or dates.')
-            break
+    # Check for sequential characters (more lenient - only reject long sequences)
+    if re.search(r'(0123|1234|2345|3456|4567|5678|6789|7890|abcd|bcde|cdef|defg)', value.lower()):
+        raise ValidationError('Password cannot contain long sequential characters like 1234 or abcd.')
     
-    # OWASP A07: Check for keyboard patterns
-    keyboard_patterns = ['qwerty', 'asdf', 'zxcv', '1234', '9876', '!@#$']
-    for pattern in keyboard_patterns:
-        if pattern in value.lower():
-            errors.append(f'Password cannot contain keyboard patterns like "{pattern}".')
-            break
+    # Check for repeated characters (more than 3 in a row)
+    if re.search(r'(.)\1\1\1', value):
+        raise ValidationError('Password cannot contain more than 3 repeated characters in a row.')
     
-    if errors:
-        raise ValidationError(errors)
+    # Ensure password is not too similar to username or email
+    # This will be checked in the form's clean method where we have access to all fields
 
 def validate_dob(value):
-    """Enhanced DOB validation like real medical portals"""
+    """Validate date of birth"""
     today = date.today()
     age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
     
-    # Check if date is in the future
-    if value > today:
-        raise ValidationError('Date of birth cannot be in the future.')
-    
-    # Check if date is too old (unrealistic)
-    if age > 100:
-        raise ValidationError('Please enter a valid date of birth. You appear to be over 100 years old.')
-    
-    # Check minimum age based on user type (this will be handled in form validation)
-    if age < 18:
-        raise ValidationError('You must be at least 18 years old to register.')
-    
-    # Additional checks for reasonable dates
-    if value.year < 1924:  # No one should be over 100
+    if age < 13:
+        raise ValidationError('You must be at least 13 years old to register.')
+    if age > 120:
         raise ValidationError('Please enter a valid date of birth.')
-    
-    if value.year > today.year - 18:  # Must be at least 18
-        raise ValidationError('You must be at least 18 years old to register.')
-    
-    return value
 
 class PatientSignupForm(forms.Form):
     """Professional patient signup form with comprehensive validation"""
     
     username = forms.CharField(
-        max_length=30,
+        max_length=20,
         validators=[validate_username],
         widget=forms.TextInput(attrs={
             'class': 'input-field',
@@ -342,11 +237,27 @@ class PatientSignupForm(forms.Form):
         })
     )
     
-    address = forms.CharField(
+    address_line = forms.CharField(
         max_length=100,
         widget=forms.TextInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Complete Address',
+            'placeholder': 'Street Address, Building, Area',
+            'required': True
+        })
+    )
+    
+    city = forms.ChoiceField(
+        choices=INDIAN_CITIES,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
+        })
+    )
+    
+    state = forms.ChoiceField(
+        choices=INDIAN_STATES,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
             'required': True
         })
     )
@@ -367,9 +278,9 @@ class PatientSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password',
+            'placeholder': 'Password (min 12 chars, strong security)',
             'required': True,
-            'title': 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
         })
     )
     
@@ -397,31 +308,67 @@ class PatientSignupForm(forms.Form):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         password1 = cleaned_data.get('password1')
+        username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
+        address_line = cleaned_data.get('address_line')
+        city = cleaned_data.get('city')
+        state = cleaned_data.get('state')
         
+        # Validate address components
+        if not address_line:
+            self.add_error('address_line', ValidationError('Please enter your street address.'))
+        if not city or city == '':
+            self.add_error('city', ValidationError('Please select a city.'))
+        if not state or state == '':
+            self.add_error('state', ValidationError('Please select a state.'))
+        
+        # Combine address fields into single address string for database storage
+        # Store in a non-field key to avoid Django rendering it as a form field
+        if address_line and city and state:
+            combined_address = f"{address_line}, {city}, {state}"
+            # Store as '_address' to avoid Django treating it as a form field
+            cleaned_data['_address'] = combined_address
+            # Also store as 'address' for views compatibility
+            cleaned_data['address'] = combined_address
+        
+        # Check password confirmation
         if password and password1 and password != password1:
-            raise ValidationError('Passwords do not match.')
+            self.add_error('password1', ValidationError('Passwords do not match.'))
+        
+        # Check password similarity with username
+        if password and username:
+            password_lower = password.lower()
+            username_lower = username.lower()
+            
+            # Check if password contains username (more than 3 characters)
+            if len(username_lower) >= 3 and username_lower in password_lower:
+                self.add_error('password', ValidationError('Password cannot contain your username.'))
+            
+            # Check similarity (80% or more similarity)
+            if self.calculate_similarity(password_lower, username_lower) > 0.8:
+                self.add_error('password', ValidationError('Password is too similar to your username.'))
+        
+        # Check password similarity with email
+        if password and email:
+            password_lower = password.lower()
+            email_parts = email.lower().split('@')[0]  # Get part before @
+            
+            # Check if password contains email prefix
+            if len(email_parts) >= 3 and email_parts in password_lower:
+                self.add_error('password', ValidationError('Password cannot contain your email address.'))
+            
+            # Check similarity
+            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+                self.add_error('password', ValidationError('Password is too similar to your email address.'))
         
         return cleaned_data
-    
-    def clean_age(self):
-        age = self.cleaned_data['age']
-        dob = self.cleaned_data.get('dob')
-        
-        if dob:
-            today = date.today()
-            calculated_age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-            
-            if abs(age - calculated_age) > 1:  # Allow 1 year difference for approximation
-                raise ValidationError('Age does not match the date of birth.')
-        
-        return age
 
 
 class DoctorSignupForm(forms.Form):
     """Professional doctor signup form with comprehensive validation"""
     
     username = forms.CharField(
-        max_length=30,
+        max_length=20,
         validators=[validate_username],
         widget=forms.TextInput(attrs={
             'class': 'input-field',
@@ -471,11 +418,27 @@ class DoctorSignupForm(forms.Form):
         })
     )
     
-    address = forms.CharField(
+    address_line = forms.CharField(
         max_length=100,
         widget=forms.TextInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Complete Address',
+            'placeholder': 'Street Address, Building, Area',
+            'required': True
+        })
+    )
+    
+    city = forms.ChoiceField(
+        choices=INDIAN_CITIES,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
+        })
+    )
+    
+    state = forms.ChoiceField(
+        choices=INDIAN_STATES,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
             'required': True
         })
     )
@@ -497,60 +460,45 @@ class DoctorSignupForm(forms.Form):
         validators=[validate_registration_number],
         widget=forms.TextInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Medical Registration Number (e.g., ABC123456)',
+            'placeholder': 'Medical Registration Number',
             'required': True,
-            'title': 'Enter your medical registration number with letters and numbers'
+            'title': 'Enter your medical registration number'
         })
     )
     
-    year_of_registration = forms.DateField(
-        widget=forms.DateInput(attrs={
+    year_of_registration = forms.IntegerField(
+        min_value=1950,
+        max_value=None,  # Will be validated in clean method
+        widget=forms.NumberInput(attrs={
             'class': 'input-field',
-            'type': 'date',
-            'required': True
+            'placeholder': 'Year of Registration (e.g., 2010)',
+            'required': True,
+            'min': '1950',
+            'max': '9999'
         })
     )
     
     qualification = forms.CharField(
-        max_length=50,
-        validators=[validate_qualification],
+        max_length=20,
         widget=forms.TextInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Qualification (e.g., MBBS, MD Medicine, MS Orthopedics)',
-            'required': True,
-            'title': 'Enter your complete medical qualification'
+            'placeholder': 'Qualification (e.g., MBBS, MD, etc.)',
+            'required': True
         })
     )
     
-    State_Medical_Council = forms.CharField(
-        max_length=50,
-        validators=[validate_medical_council],
-        widget=forms.TextInput(attrs={
-            'class': 'input-field',
-            'placeholder': 'State Medical Council (e.g., Maharashtra Medical Council)',
-            'required': True,
-            'title': 'Enter your state medical council name'
+    State_Medical_Council = forms.ChoiceField(
+        choices=INDIAN_STATES,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
         })
     )
     
     specialization = forms.ChoiceField(
         choices=[
             ('', 'Select Specialization'),
-            ('Rheumatologist', 'Rheumatologist'),
-            ('Cardiologist', 'Cardiologist'),
-            ('ENT specialist', 'ENT Specialist'),
-            ('Orthopedist', 'Orthopedist'),
-            ('Neurologist', 'Neurologist'),
-            ('Allergist/Immunologist', 'Allergist/Immunologist'),
-            ('Urologist', 'Urologist'),
             ('Dermatologist', 'Dermatologist'),
-            ('Gastroenterologist', 'Gastroenterologist'),
-            ('General Physician', 'General Physician'),
-            ('Pediatrician', 'Pediatrician'),
-            ('Psychiatrist', 'Psychiatrist'),
-            ('Oncologist', 'Oncologist'),
-            ('Ophthalmologist', 'Ophthalmologist'),
-            ('Other', 'Other'),
         ],
         widget=forms.Select(attrs={
             'class': 'select-field',
@@ -562,9 +510,9 @@ class DoctorSignupForm(forms.Form):
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Password',
+            'placeholder': 'Password (min 12 chars, strong security)',
             'required': True,
-            'title': 'Password must be at least 8 characters with uppercase, lowercase, number, and special character'
+            'title': 'Password must be at least 12 characters with uppercase, lowercase, number, and special character. No common patterns or sequential characters allowed.'
         })
     )
     
@@ -589,69 +537,334 @@ class DoctorSignupForm(forms.Form):
         return email
     
     def clean_year_of_registration(self):
-        year_of_reg = self.cleaned_data['year_of_registration']
+        year_value = self.cleaned_data['year_of_registration']
         dob = self.cleaned_data.get('dob')
         
-        if year_of_reg and dob:
-            # Doctor should be at least 24 years old when registering
-            age_at_registration = year_of_reg.year - dob.year - ((year_of_reg.month, year_of_reg.day) < (dob.month, dob.day))
-            if age_at_registration < 24:
-                raise ValidationError('Invalid year of registration. You should be at least 24 years old when registering.')
+        if year_value:
+            # Convert year to date (January 1st of that year) for storage
+            year_of_reg = date(year_value, 1, 1)
             
             # Registration should not be in the future
             if year_of_reg > date.today():
                 raise ValidationError('Registration year cannot be in the future.')
+            
+            if dob:
+                # Doctor should be at least 24 years old when registering
+                age_at_registration = year_of_reg.year - dob.year - ((year_of_reg.month, year_of_reg.day) < (dob.month, dob.day))
+                if age_at_registration < 24:
+                    raise ValidationError('Invalid year of registration. You should be at least 24 years old when registering.')
+            
+            return year_of_reg
         
-        return year_of_reg
+        return year_value
     
     def clean(self):
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         password1 = cleaned_data.get('password1')
+        username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
+        address_line = cleaned_data.get('address_line')
+        city = cleaned_data.get('city')
+        state = cleaned_data.get('state')
         
+        # Validate address components
+        if not address_line:
+            self.add_error('address_line', ValidationError('Please enter your street address.'))
+        if not city or city == '':
+            self.add_error('city', ValidationError('Please select a city.'))
+        if not state or state == '':
+            self.add_error('state', ValidationError('Please select a state.'))
+        
+        # Combine address fields into single address string for database storage
+        # Store in a non-field key to avoid Django rendering it as a form field
+        if address_line and city and state:
+            combined_address = f"{address_line}, {city}, {state}"
+            # Store as '_address' to avoid Django treating it as a form field
+            cleaned_data['_address'] = combined_address
+            # Also store as 'address' for views compatibility
+            cleaned_data['address'] = combined_address
+        
+        # Check password confirmation
         if password and password1 and password != password1:
-            raise ValidationError('Passwords do not match.')
+            self.add_error('password1', ValidationError('Passwords do not match.'))
+        
+        # Check password similarity with username
+        if password and username:
+            password_lower = password.lower()
+            username_lower = username.lower()
+            
+            # Check if password contains username (more than 3 characters)
+            if len(username_lower) >= 3 and username_lower in password_lower:
+                self.add_error('password', ValidationError('Password cannot contain your username.'))
+            
+            # Check similarity (80% or more similarity)
+            if self.calculate_similarity(password_lower, username_lower) > 0.8:
+                self.add_error('password', ValidationError('Password is too similar to your username.'))
+        
+        # Check password similarity with email
+        if password and email:
+            password_lower = password.lower()
+            email_parts = email.lower().split('@')[0]  # Get part before @
+            
+            # Check if password contains email prefix
+            if len(email_parts) >= 3 and email_parts in password_lower:
+                self.add_error('password', ValidationError('Password cannot contain your email address.'))
+            
+            # Check similarity
+            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+                self.add_error('password', ValidationError('Password is too similar to your email address.'))
         
         return cleaned_data
+    
+    def calculate_similarity(self, str1, str2):
+        """Calculate similarity between two strings (0-1 scale)"""
+        if not str1 or not str2:
+            return 0
+        
+        # Simple character-based similarity
+        common_chars = 0
+        for char in set(str1):
+            common_chars += min(str1.count(char), str2.count(char))
+        
+        total_chars = max(len(str1), len(str2))
+        return common_chars / total_chars if total_chars > 0 else 0
 
 
 class PatientProfileUpdateForm(forms.Form):
-    """Form for updating patient profile"""
+    """Professional patient profile update form with comprehensive validation"""
     
-    name = forms.CharField(max_length=50, required=True)
-    dob = forms.DateField(validators=[validate_dob], required=True)
-    gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], required=True)
-    address = forms.CharField(max_length=100, required=True)
-    mobile_no = forms.CharField(max_length=10, validators=[validate_mobile_number], required=True)
+    name = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Full Name',
+            'required': True
+        })
+    )
+    
+    dob = forms.DateField(
+        validators=[validate_dob],
+        widget=forms.DateInput(attrs={
+            'class': 'input-field',
+            'type': 'date',
+            'required': True
+        })
+    )
+    
+    gender = forms.ChoiceField(
+        choices=[
+            ('male', 'Male'),
+            ('female', 'Female'),
+            ('other', 'Other')
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'radio-btn',
+            'required': True
+        })
+    )
+    
+    address = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Complete Address',
+            'required': True
+        })
+    )
+    
+    mobile_no = forms.CharField(
+        max_length=10,
+        validators=[validate_mobile_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Mobile Number',
+            'required': True,
+            'pattern': '[0-9]{10}',
+            'title': 'Please enter 10 digit mobile number'
+        })
+    )
+    
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if len(name) < 2:
+            raise ValidationError('Name must be at least 2 characters long.')
+        if len(name) > 50:
+            raise ValidationError('Name cannot be more than 50 characters long.')
+        return name
+    
+    def clean_address(self):
+        address = self.cleaned_data['address'].strip()
+        if len(address) < 10:
+            raise ValidationError('Address must be at least 10 characters long.')
+        if len(address) > 100:
+            raise ValidationError('Address cannot be more than 100 characters long.')
+        return address
 
 
 class DoctorProfileUpdateForm(forms.Form):
-    """Form for updating doctor profile"""
+    """Professional doctor profile update form with comprehensive validation"""
     
-    name = forms.CharField(max_length=50, required=True)
-    dob = forms.DateField(validators=[validate_dob], required=True)
-    gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], required=True)
-    address = forms.CharField(max_length=100, required=True)
-    mobile_no = forms.CharField(max_length=10, validators=[validate_mobile_number], required=True)
-    registration_no = forms.CharField(max_length=20, validators=[validate_registration_number], required=True)
-    year_of_registration = forms.DateField(required=True)
-    qualification = forms.CharField(max_length=20, required=True)
-    State_Medical_Council = forms.CharField(max_length=30, required=True)
-    specialization = forms.ChoiceField(choices=[
-        ('', 'Select Specialization'),
-        ('Rheumatologist', 'Rheumatologist'),
-        ('Cardiologist', 'Cardiologist'),
-        ('ENT specialist', 'ENT Specialist'),
-        ('Orthopedist', 'Orthopedist'),
-        ('Neurologist', 'Neurologist'),
-        ('Allergist/Immunologist', 'Allergist/Immunologist'),
-        ('Urologist', 'Urologist'),
-        ('Dermatologist', 'Dermatologist'),
-        ('Gastroenterologist', 'Gastroenterologist'),
-        ('General Physician', 'General Physician'),
-        ('Pediatrician', 'Pediatrician'),
-        ('Psychiatrist', 'Psychiatrist'),
-        ('Oncologist', 'Oncologist'),
-        ('Ophthalmologist', 'Ophthalmologist'),
-        ('Other', 'Other'),
-    ], required=True)
+    name = forms.CharField(
+        max_length=50,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Full Name',
+            'required': True
+        })
+    )
+    
+    dob = forms.DateField(
+        validators=[validate_dob],
+        widget=forms.DateInput(attrs={
+            'class': 'input-field',
+            'type': 'date',
+            'required': True
+        })
+    )
+    
+    gender = forms.ChoiceField(
+        choices=[
+            ('male', 'Male'),
+            ('female', 'Female'),
+            ('other', 'Other')
+        ],
+        widget=forms.RadioSelect(attrs={
+            'class': 'radio-btn',
+            'required': True
+        })
+    )
+    
+    address = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Complete Address',
+            'required': True
+        })
+    )
+    
+    mobile_no = forms.CharField(
+        max_length=10,
+        validators=[validate_mobile_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Mobile Number',
+            'required': True,
+            'pattern': '[0-9]{10}',
+            'title': 'Please enter 10 digit mobile number'
+        })
+    )
+    
+    registration_no = forms.CharField(
+        max_length=20,
+        validators=[validate_registration_number],
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Medical Registration Number',
+            'required': True,
+            'title': 'Enter your medical registration number'
+        })
+    )
+    
+    year_of_registration = forms.IntegerField(
+        min_value=1950,
+        max_value=None,  # Will be validated in clean method
+        required=True,
+        widget=forms.NumberInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Year of Registration (e.g., 2010)',
+            'required': True,
+            'min': '1950',
+            'max': '9999'
+        })
+    )
+    
+    qualification = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'input-field',
+            'placeholder': 'Qualification (e.g., MBBS, MD, etc.)',
+            'required': True
+        })
+    )
+    
+    State_Medical_Council = forms.ChoiceField(
+        choices=INDIAN_STATES,
+        required=True,
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
+        })
+    )
+    
+    specialization = forms.ChoiceField(
+        choices=[
+            ('', 'Select Specialization'),
+            ('Dermatologist', 'Dermatologist'),
+        ],
+        widget=forms.Select(attrs={
+            'class': 'select-field',
+            'required': True
+        })
+    )
+    
+    def clean_name(self):
+        name = self.cleaned_data['name'].strip()
+        if len(name) < 2:
+            raise ValidationError('Name must be at least 2 characters long.')
+        if len(name) > 50:
+            raise ValidationError('Name cannot be more than 50 characters long.')
+        return name
+    
+    def clean_address(self):
+        address = self.cleaned_data['address'].strip()
+        if len(address) < 10:
+            raise ValidationError('Address must be at least 10 characters long.')
+        if len(address) > 100:
+            raise ValidationError('Address cannot be more than 100 characters long.')
+        return address
+    
+    def clean_qualification(self):
+        qualification = self.cleaned_data['qualification'].strip()
+        if len(qualification) < 2:
+            raise ValidationError('Qualification must be at least 2 characters long.')
+        if len(qualification) > 20:
+            raise ValidationError('Qualification cannot be more than 20 characters long.')
+        return qualification
+    
+    def clean_State_Medical_Council(self):
+        state = self.cleaned_data['State_Medical_Council']
+        if not state or state == '':
+            raise ValidationError('Please select a state.')
+        return state
+    
+    def clean_year_of_registration(self):
+        year_value = self.cleaned_data['year_of_registration']
+        dob = self.cleaned_data.get('dob')
+        
+        if year_value:
+            # Convert year to date (January 1st of that year) for storage
+            year_of_reg = date(year_value, 1, 1)
+            
+            # Registration should not be in the future
+            if year_of_reg > date.today():
+                raise ValidationError('Registration year cannot be in the future.')
+            
+            if dob:
+                # Doctor should be at least 24 years old when registering
+                age_at_registration = year_of_reg.year - dob.year - ((year_of_reg.month, year_of_reg.day) < (dob.month, dob.day))
+                if age_at_registration < 24:
+                    raise ValidationError('Invalid year of registration. You should be at least 24 years old when registering.')
+            
+            return year_of_reg
+        
+        return year_value

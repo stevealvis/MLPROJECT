@@ -73,18 +73,43 @@ def create_admin_user():
         # Fallback: Manual creation
         try:
             if not User.objects.filter(username='admin').exists():
+                # Generate secure password instead of using hardcoded one
+                import secrets
+                import string
+                secure_password = ''.join(secrets.choice(string.ascii_letters + string.digits + "!@#$%^&*()") for _ in range(16))
+                
                 admin_user = User.objects.create_superuser(
                     username='admin',
-                    email='admin@admin.com',
-                    password='admin123'
+                    email='admin@secure-portal.com',
+                    password=secure_password
                 )
                 admin_user.is_staff = True
                 admin_user.is_superuser = True
                 admin_user.save()
-                print("✓ Admin user created manually!")
+                print("✓ Admin user created manually with SECURE password!")
+                print(f"Generated Secure Password: {secure_password}")
+                
+                # Save password to file for reference
+                with open("/Users/ankuankit/Desktop/pro/MLproject/railway_admin_password.txt", 'w') as f:
+                    f.write(f"Railway Admin Password: {secure_password}\n")
+                    f.write("Generated via railway_admin_fix.py\n")
+                    f.write("⚠️ DELETE THIS FILE AFTER SAVING PASSWORD!\n")
+                
+                print("🔒 Password saved to railway_admin_password.txt")
+                print("🔒 DELETE THE FILE AFTER SAVING PASSWORD SECURELY!")
                 return True
             else:
                 print("Admin user already exists (manual check)")
+                # Check if existing password is weak
+                admin_user = User.objects.get(username='admin')
+                if admin_user.check_password('admin123') or admin_user.check_password('password'):
+                    print("⚠️ Weak password detected, updating...")
+                    import secrets
+                    import string
+                    new_password = ''.join(secrets.choice(string.ascii_letters + string.digits + "!@#$%^&*()") for _ in range(16))
+                    admin_user.set_password(new_password)
+                    admin_user.save()
+                    print(f"✅ Password updated to secure version: {new_password}")
                 return True
         except Exception as e2:
             print(f"✗ Manual creation also failed: {e2}")
