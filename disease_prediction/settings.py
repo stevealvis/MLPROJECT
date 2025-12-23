@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'mlproject-production-a7e2.up.railway.app',
+    'skinpro.up.railway.app',
     'localhost',
     '127.0.0.1',
     '*'  # Keep for development
@@ -35,6 +36,7 @@ ALLOWED_HOSTS = [
 # CSRF trusted origins for Railway deployment
 CSRF_TRUSTED_ORIGINS = [
     'https://mlproject-production-a7e2.up.railway.app',
+    'https://skinpro.up.railway.app',
     'http://localhost:8000',  # for local development
     'http://127.0.0.1:8000',  # alternative localhost format
 ]
