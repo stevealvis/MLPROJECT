@@ -153,7 +153,7 @@ class FormValidationTests(unittest.TestCase):
             'address': '456 Medical Center, City, State 12345',
             'mobile_no': '8765432109',
             'registration_no': 'MD123456789',
-            'year_of_registration': '2005-01-01',
+            'year_of_registration': 2005,
             'qualification': 'MBBS MD',
             'State_Medical_Council': 'State Medical Council',
             'specialization': 'General Physician',
@@ -184,7 +184,7 @@ class FormValidationTests(unittest.TestCase):
             'address': 'Updated Address, City, State',
             'mobile_no': '8765432109',
             'registration_no': 'MD123456789',
-            'year_of_registration': '2005-01-01',
+            'year_of_registration': 2005,
             'qualification': 'MBBS MD',
             'State_Medical_Council': 'State Medical Council',
             'specialization': 'General Physician'
@@ -294,7 +294,7 @@ class DatabaseIntegrityTests(unittest.TestCase):
             mobile_no='9876543210',
             gender='female',
             registration_no='MD123456789',
-            year_of_registration='2005-01-01',
+            year_of_registration=2005,
             qualification='MBBS MD',
             State_Medical_Council='Test Council',
             specialization='General Physician'
