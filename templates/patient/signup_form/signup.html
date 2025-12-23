@@ -1109,12 +1109,13 @@
       const validateAgeDOB = () => {
         const ageValue = parseInt(ageField.value);
         const dobValue = new Date(dobField.value);
+        const today = new Date();
         
-        // Clear previous validation
         ageField.style.borderColor = '#FFB3B3';
         dobField.style.borderColor = '#FFB3B3';
+        ageField.setCustomValidity('');
+        dobField.setCustomValidity('');
         
-        // Remove existing errors
         [ageField, dobField].forEach(field => {
           const existingError = field.parentNode.querySelector('.validation-error');
           if (existingError) {
@@ -1122,13 +1123,68 @@
           }
         });
         
+        if (!dobField.value && !ageField.value) {
+          return;
+        }
+        
+        if (dobField.value) {
+          if (Number.isNaN(dobValue.getTime())) {
+            const errorMsg = 'Please enter a valid date of birth.';
+            dobField.style.borderColor = '#dc3545';
+            dobField.setCustomValidity(errorMsg);
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'validation-error';
+            errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+            errorDiv.textContent = errorMsg;
+            dobField.parentNode.appendChild(errorDiv);
+            return;
+          }
+          
+          if (dobValue > today) {
+            const errorMsg = 'Please enter a valid date of birth (cannot be in the future).';
+            ageField.style.borderColor = '#dc3545';
+            dobField.style.borderColor = '#dc3545';
+            ageField.setCustomValidity(errorMsg);
+            dobField.setCustomValidity(errorMsg);
+            
+            [ageField, dobField].forEach(field => {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'validation-error';
+              errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+              errorDiv.textContent = errorMsg;
+              field.parentNode.appendChild(errorDiv);
+            });
+            return;
+          }
+        }
+        
         if (ageValue && dobField.value) {
-          const today = new Date();
-          const calculatedAge = today.getFullYear() - dobValue.getFullYear();
+          let calculatedAge = today.getFullYear() - dobValue.getFullYear();
           const monthDiff = today.getMonth() - dobValue.getMonth();
           
           if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobValue.getDate())) {
             calculatedAge--;
+          }
+          
+          if (calculatedAge < 13 || calculatedAge > 120) {
+            const errorMsg = calculatedAge < 13
+              ? 'You must be at least 13 years old to register.'
+              : 'Please enter a valid date of birth.';
+            
+            ageField.style.borderColor = '#dc3545';
+            dobField.style.borderColor = '#dc3545';
+            ageField.setCustomValidity(errorMsg);
+            dobField.setCustomValidity(errorMsg);
+            
+            [ageField, dobField].forEach(field => {
+              const errorDiv = document.createElement('div');
+              errorDiv.className = 'validation-error';
+              errorDiv.style.cssText = 'color: #dc3545; font-size: 0.8rem; margin-top: 5px; animation: fadeIn 0.3s ease;';
+              errorDiv.textContent = errorMsg;
+              field.parentNode.appendChild(errorDiv);
+            });
+            return;
           }
           
           const ageDiff = Math.abs(ageValue - calculatedAge);
@@ -1136,6 +1192,8 @@
           if (ageDiff <= 1) {
             ageField.style.borderColor = '#28a745';
             dobField.style.borderColor = '#28a745';
+            ageField.setCustomValidity('');
+            dobField.setCustomValidity('');
           } else {
             ageField.style.borderColor = '#dc3545';
             dobField.style.borderColor = '#dc3545';
@@ -1152,9 +1210,6 @@
               field.parentNode.appendChild(errorDiv);
             });
           }
-        } else {
-          ageField.setCustomValidity('');
-          dobField.setCustomValidity('');
         }
       };
       
