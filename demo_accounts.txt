@@ -1,0 +1,29 @@
+DEMO PATIENT ACCOUNTS
+----------------------
+1) Username: patient_demo1
+   Password: PatientDemo1!
+
+2) Username: patient_demo2
+   Password: PatientDemo2!
+
+3) Username: patient_demo3
+   Password: PatientDemo3!
+
+4) Username: patient_demo4
+   Password: PatientDemo4!
+
+
+DEMO DOCTOR ACCOUNTS
+--------------------
+1) Username: doctor_demo1
+   Password: DoctorDemo1!
+
+2) Username: doctor_demo2
+   Password: DoctorDemo2!
+
+3) Username: doctor_demo3
+   Password: DoctorDemo3!
+
+4) Username: doctor_demo4
+   Password: DoctorDemo4!
+

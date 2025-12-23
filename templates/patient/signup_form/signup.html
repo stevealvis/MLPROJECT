@@ -533,7 +533,7 @@
           <div class="form-col">
             <div class="input-container">
               <i class="fa fa-birthday-cake icon"></i>
-              {{ form.age }}
+              <input type="number" name="age" class="input-field" placeholder="Age" min="13" max="120" required="" id="id_age" readonly>
               <span class="focus-border"></span>
             </div>
             {% if form.age.errors %}
@@ -665,6 +665,26 @@
 <script>
   // Professional form validation and enhancements
   document.addEventListener('DOMContentLoaded', function() {
+    const dobField = document.getElementById('id_dob');
+    const ageField = document.getElementById('id_age');
+
+    if (dobField && ageField) {
+      dobField.addEventListener('input', function() {
+        const dobValue = this.value;
+        if (dobValue) {
+          const birthDate = new Date(dobValue);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          ageField.value = age;
+        } else {
+          ageField.value = '';
+        }
+      });
+    }
     // Enhanced form validation with real-time feedback
     const validationRules = {
       username: {
