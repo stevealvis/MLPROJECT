@@ -50,11 +50,10 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.WARNING(f'Admin user "{username}" already exists. Deleting and recreating...')
                 )
-                admin_user.delete()
-                # Delete any existing patient/doctor profiles
                 from main_app.models import patient, doctor
                 patient.objects.filter(user=admin_user).delete()
                 doctor.objects.filter(user=admin_user).delete()
+                admin_user.delete()
             else:
                 self.stdout.write(
                     self.style.ERROR(f'Admin user "{username}" already exists. Use --force to recreate.')
