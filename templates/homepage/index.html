@@ -113,10 +113,15 @@
     display: block;
     text-decoration: none;
     transition: all 0.3s ease;
+    padding: 15px;
+    border-radius: 20px;
+    background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.2));
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   }
 
   .user-type-link:hover {
     transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.2);
   }
 
   .user-type-img {
@@ -131,6 +136,39 @@
   .user-type-img:hover {
     border-color: var(--primary-bright);
     box-shadow: 0 15px 40px rgba(255, 107, 107, 0.3);
+  }
+
+  #footer.card {
+    border: none;
+    background: linear-gradient(135deg, #111827, #020617);
+    border-radius: 0;
+    margin-top: 40px;
+  }
+
+  #footer .card-body {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  #footer ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+  }
+
+  #footer h5 {
+    font-weight: 500;
+  }
+
+  #footer a {
+    color: var(--accent-bright);
+    text-decoration: none;
+  }
+
+  #footer a:hover {
+    text-decoration: underline;
   }
 
   @keyframes fadeInUp {
