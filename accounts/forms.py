@@ -97,9 +97,9 @@ def validate_username(value):
     # Must start with a letter
     if not value or not value[0].isalpha():
         raise ValidationError('Username must start with a letter.')
-    # Only letters and numbers allowed (no spaces or symbols)
-    if not re.match(r'^[a-zA-Z][a-zA-Z0-9]*$', value):
-        raise ValidationError('Username can only contain letters and numbers. No spaces or symbols allowed.')
+    # Only letters, numbers, and underscores allowed (no spaces or other symbols)
+    if not re.match(r'^[a-zA-Z][a-zA-Z0-9_]*$', value):
+        raise ValidationError('Username can only contain letters, numbers, and underscores. No spaces or other symbols allowed.')
     # Length must be 5-20 characters
     if len(value) < 5:
         raise ValidationError('Username must be at least 5 characters long.')
@@ -141,17 +141,29 @@ def validate_password_strength(value):
     
     # Check for common weak patterns (more specific to avoid false positives)
     common_weak_patterns = [
-        '123456', 'password123', 'admin123', 'qwerty', 'abc123',
-        'welcome123', 'test123', 'login123', '123456789'
+        '123456', 'password123', 'admin123', 'qwerty123', 'abc123456',
+        'welcome123', 'test123', 'login123', '123456789', '1234567890',
+        'password', 'admin', 'qwerty', 'abc123', '111111', '123123',
+        '1234567890123456',  # Common long digit sequence
+        'qwertyuiop',  # Keyboard sequences
+        'asdfghjkl',   # Keyboard sequences
+        'zxcvbnm'      # Keyboard sequences
     ]
     
     password_lower = value.lower()
     for pattern in common_weak_patterns:
-        if pattern in password_lower:
-            raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
+        # More sophisticated pattern matching
+        if pattern == 'password':
+            # Only flag if it's exactly "password" (standalone)
+            if password_lower == 'password':
+                raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
+        elif pattern in password_lower:
+            # For other patterns, check if they appear at the beginning
+            if password_lower.startswith(pattern):
+                raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
     
-    # Check for sequential characters (more lenient - only reject long sequences)
-    if re.search(r'(0123|1234|2345|3456|4567|5678|6789|7890|abcd|bcde|cdef|defg)', value.lower()):
+    # Check for sequential characters (more lenient - only reject long sequences of 4+)
+    if re.search(r'(0123|1234|2345|3456|4567|5678|6789|7890|abcd|bcde|cdef|defg|efgh|fghi)', value.lower()):
         raise ValidationError('Password cannot contain long sequential characters like 1234 or abcd.')
     
     # Check for repeated characters (more than 3 in a row)
@@ -216,12 +228,14 @@ class PatientSignupForm(forms.Form):
     age = forms.IntegerField(
         min_value=13,
         max_value=120,
+        required=False,  # Not required since it's auto-calculated
         widget=forms.NumberInput(attrs={
             'class': 'input-field',
-            'placeholder': 'Age',
+            'placeholder': 'Age (auto-calculated)',
             'min': '13',
             'max': '120',
-            'required': True
+            'readonly': 'readonly',
+            'style': 'background-color: #f8f9fa; cursor: not-allowed;'
         })
     )
     
