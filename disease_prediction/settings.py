@@ -109,13 +109,33 @@ WSGI_APPLICATION = 'disease_prediction.wsgi.application'
 #          'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 #      }
 #  }  
-# Use SQLite for testing to avoid database connection issues
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+# Database configuration for Railway
+# Use Railway's DATABASE_URL if available, otherwise fallback to SQLite
+import dj_database_url
+
+if os.environ.get('DATABASE_URL'):
+    # Use Railway's DATABASE_URL environment variable
+    try:
+        DATABASES = {
+            'default': dj_database_url.parse(os.environ.get('DATABASE_URL'), conn_max_age=600)
+        }
+    except Exception as e:
+        print(f"Warning: Failed to parse DATABASE_URL: {e}")
+        # Fallback to SQLite if DATABASE_URL parsing fails
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+            }
+        }
+else:
+    # Fallback to SQLite for local development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
