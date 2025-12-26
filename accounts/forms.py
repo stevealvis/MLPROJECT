@@ -124,8 +124,8 @@ def validate_registration_number(value):
 
 def validate_password_strength(value):
     """Validate password strength with enhanced security"""
-    if len(value) < 6:
-        raise ValidationError('Password must be at least 6 characters long.')
+    if len(value) < 8:
+        raise ValidationError('Password must be at least 8 characters long.')
     
     if not re.search(r'[A-Z]', value):
         raise ValidationError('Password must contain at least one uppercase letter (A-Z).')
@@ -147,7 +147,11 @@ def validate_password_strength(value):
         '1234567890123456',  # Common long digit sequence
         'qwertyuiop',  # Keyboard sequences
         'asdfghjkl',   # Keyboard sequences
-        'zxcvbnm'      # Keyboard sequences
+        'zxcvbnm',     # Keyboard sequences
+        'short',       # Common short word patterns
+        'test',        # Common test patterns
+        'demo',        # Common demo patterns
+        'sample'       # Common sample patterns
     ]
     
     password_lower = value.lower()
@@ -169,6 +173,16 @@ def validate_password_strength(value):
     # Check for repeated characters (more than 3 in a row)
     if re.search(r'(.)\1\1\1', value):
         raise ValidationError('Password cannot contain more than 3 repeated characters in a row.')
+    
+    # Additional check for very short meaningful words combined with numbers
+    # This catches passwords like "Short1!" which have a common short word + number + special char
+    short_words = ['short', 'long', 'big', 'small', 'good', 'bad', 'new', 'old', 'red', 'blue', 'black', 'white']
+    for word in short_words:
+        if word in password_lower and len(word) >= 4:
+            # Check if it's a meaningful word (not part of a longer word)
+            word_pattern = r'\b' + word + r'\b'
+            if re.search(word_pattern, password_lower):
+                raise ValidationError('Password contains common weak patterns. Please choose a more secure password.')
     
     # Ensure password is not too similar to username or email
     # This will be checked in the form's clean method where we have access to all fields
@@ -418,27 +432,31 @@ class PatientSignupForm(forms.Form):
         if password and email:
             password_lower = password.lower()
             email_parts = email.lower().split('@')[0]  # Get part before @
-            
-            # Check if password contains email prefix
-            if len(email_parts) >= 3 and email_parts in password_lower:
-                self.add_error('password', ValidationError('Password cannot contain your email address.'))
-            
-            # Check similarity
-            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+
+            # More lenient check - only flag if email prefix is a significant part of password
+            # and the password is mostly the email prefix
+            if len(email_parts) >= 4 and email_parts in password_lower:
+                # Only flag if the email prefix makes up most of the password
+                # or if it's the entire password
+                if len(password_lower) <= len(email_parts) + 2:  # Allow small additions
+                    self.add_error('password', ValidationError('Password cannot be too similar to your email address.'))
+
+            # Check similarity - more lenient threshold
+            if self.calculate_similarity(password_lower, email_parts) > 0.9:  # Increased from 0.8
                 self.add_error('password', ValidationError('Password is too similar to your email address.'))
-        
+
         return cleaned_data
-    
+
     def calculate_similarity(self, str1, str2):
         """Calculate similarity between two strings (0-1 scale)"""
         if not str1 or not str2:
             return 0
-        
+
         # Simple character-based similarity
         common_chars = 0
         for char in set(str1):
             common_chars += min(str1.count(char), str2.count(char))
-        
+
         total_chars = max(len(str1), len(str2))
         return common_chars / total_chars if total_chars > 0 else 0
 
@@ -577,14 +595,28 @@ class DoctorSignupForm(forms.Form):
     specialization = forms.ChoiceField(
         choices=[
             ('', 'Select Specialization'),
+            ('Rheumatologist', 'Rheumatologist'),
+            ('Cardiologist', 'Cardiologist'),
+            ('ENT specialist', 'ENT Specialist'),
+            ('Orthopedist', 'Orthopedist'),
+            ('Neurologist', 'Neurologist'),
+            ('Allergist/Immunologist', 'Allergist/Immunologist'),
+            ('Urologist', 'Urologist'),
             ('Dermatologist', 'Dermatologist'),
+            ('Gastroenterologist', 'Gastroenterologist'),
+            ('General Physician', 'General Physician'),
+            ('Pediatrician', 'Pediatrician'),
+            ('Psychiatrist', 'Psychiatrist'),
+            ('Oncologist', 'Oncologist'),
+            ('Ophthalmologist', 'Ophthalmologist'),
+            ('Other', 'Other'),
         ],
         widget=forms.Select(attrs={
             'class': 'select-field',
             'required': True
         })
     )
-    
+
     password = forms.CharField(
         validators=[validate_password_strength],
         widget=forms.PasswordInput(attrs={
@@ -686,27 +718,31 @@ class DoctorSignupForm(forms.Form):
         if password and email:
             password_lower = password.lower()
             email_parts = email.lower().split('@')[0]  # Get part before @
-            
-            # Check if password contains email prefix
-            if len(email_parts) >= 3 and email_parts in password_lower:
-                self.add_error('password', ValidationError('Password cannot contain your email address.'))
-            
-            # Check similarity
-            if self.calculate_similarity(password_lower, email_parts) > 0.8:
+
+            # More lenient check - only flag if email prefix is a significant part of password
+            # and the password is mostly the email prefix
+            if len(email_parts) >= 4 and email_parts in password_lower:
+                # Only flag if the email prefix makes up most of the password
+                # or if it's the entire password
+                if len(password_lower) <= len(email_parts) + 2:  # Allow small additions
+                    self.add_error('password', ValidationError('Password cannot be too similar to your email address.'))
+
+            # Check similarity - more lenient threshold
+            if self.calculate_similarity(password_lower, email_parts) > 0.9:  # Increased from 0.8
                 self.add_error('password', ValidationError('Password is too similar to your email address.'))
-        
+
         return cleaned_data
-    
+
     def calculate_similarity(self, str1, str2):
         """Calculate similarity between two strings (0-1 scale)"""
         if not str1 or not str2:
             return 0
-        
+
         # Simple character-based similarity
         common_chars = 0
         for char in set(str1):
             common_chars += min(str1.count(char), str2.count(char))
-        
+
         total_chars = max(len(str1), len(str2))
         return common_chars / total_chars if total_chars > 0 else 0
 
@@ -889,14 +925,28 @@ class DoctorProfileUpdateForm(forms.Form):
     specialization = forms.ChoiceField(
         choices=[
             ('', 'Select Specialization'),
+            ('Rheumatologist', 'Rheumatologist'),
+            ('Cardiologist', 'Cardiologist'),
+            ('ENT specialist', 'ENT Specialist'),
+            ('Orthopedist', 'Orthopedist'),
+            ('Neurologist', 'Neurologist'),
+            ('Allergist/Immunologist', 'Allergist/Immunologist'),
+            ('Urologist', 'Urologist'),
             ('Dermatologist', 'Dermatologist'),
+            ('Gastroenterologist', 'Gastroenterologist'),
+            ('General Physician', 'General Physician'),
+            ('Pediatrician', 'Pediatrician'),
+            ('Psychiatrist', 'Psychiatrist'),
+            ('Oncologist', 'Oncologist'),
+            ('Ophthalmologist', 'Ophthalmologist'),
+            ('Other', 'Other'),
         ],
         widget=forms.Select(attrs={
             'class': 'select-field',
             'required': True
         })
     )
-    
+
     def clean_name(self):
         name = self.cleaned_data['name'].strip()
         if len(name) < 2:

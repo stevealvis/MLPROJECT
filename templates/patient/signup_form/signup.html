@@ -665,25 +665,55 @@
 <script>
   // Professional form validation and enhancements
   document.addEventListener('DOMContentLoaded', function() {
-    const dobField = document.getElementById('id_dob');
-    const ageField = document.getElementById('id_age');
+    const dobInput = document.getElementById('id_dob');
+    const ageInput = document.getElementById('id_age');
 
-    if (dobField && ageField) {
-      dobField.addEventListener('input', function() {
-        const dobValue = this.value;
-        if (dobValue) {
-          const birthDate = new Date(dobValue);
-          const today = new Date();
-          let age = today.getFullYear() - birthDate.getFullYear();
-          const m = today.getMonth() - birthDate.getMonth();
-          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-          }
-          ageField.value = age;
-        } else {
-          ageField.value = '';
+    if (dobInput) {
+      const today = new Date();
+      const maxDate = new Date(today.getFullYear() - 13, today.getMonth(), today.getDate());
+      const minDate = new Date(today.getFullYear() - 120, today.getMonth(), today.getDate());
+      const toIso = d => d.toISOString().split('T')[0];
+      dobInput.setAttribute('max', toIso(maxDate));
+      dobInput.setAttribute('min', toIso(minDate));
+    }
+
+    if (dobInput && ageInput) {
+      const updateAgeFromDob = () => {
+        const dobValue = dobInput.value;
+        if (!dobValue) {
+          ageInput.value = '';
+          dobInput.setCustomValidity('');
+          return;
         }
-      });
+
+        const birthDate = new Date(dobValue);
+        if (Number.isNaN(birthDate.getTime())) {
+          ageInput.value = '';
+          dobInput.setCustomValidity('Please enter a valid date of birth.');
+          dobInput.reportValidity();
+          return;
+        }
+
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+
+        if (age < 13 || age > 120) {
+          ageInput.value = '';
+          dobInput.setCustomValidity('Age must be between 13 and 120 years.');
+          dobInput.reportValidity();
+          return;
+        }
+
+        dobInput.setCustomValidity('');
+        ageInput.value = age;
+      };
+
+      dobInput.addEventListener('input', updateAgeFromDob);
+      dobInput.addEventListener('change', updateAgeFromDob);
     }
     // Enhanced form validation with real-time feedback
     const validationRules = {
