@@ -129,6 +129,10 @@ def validate_skin_image(img):
 import os, json
 import joblib as jb
 
+# Model paths defined early to avoid undefined references
+CNN_MODEL_PATH = os.path.join('models', 'skin_cnn.h5')
+CNN_LABELS_PATH = os.path.join('models', 'skin_cnn_labels.json')
+
 _symptom_model = None
 _image_model = None
 _image_labels = None
@@ -137,7 +141,11 @@ _image_labels = None
 def get_symptom_model():
     global _symptom_model
     if _symptom_model is None:
-        _symptom_model = jb.load(os.path.join('models', 'trained_model'))
+        try:
+            _symptom_model = jb.load('trained_model')
+        except Exception as e:
+            print(f"Warning: could not load symptom model: {e}")
+            _symptom_model = None
     return _symptom_model
 
 
@@ -145,39 +153,42 @@ def get_image_model():
     global _image_model, _image_labels
 
     if _image_model is None:
-        from tensorflow import keras
+        try:
+            from tensorflow import keras
 
-        if not os.path.exists(CNN_MODEL_PATH):
-            return None, None
+            if not os.path.exists(CNN_MODEL_PATH):
+                print(f"CNN model not found at {CNN_MODEL_PATH}")
+                return None, None
 
-        _image_model = keras.models.load_model(CNN_MODEL_PATH)
+            _image_model = keras.models.load_model(CNN_MODEL_PATH)
 
-        with open(CNN_LABELS_PATH) as f:
-            _image_labels = json.load(f)
+            if os.path.exists(CNN_LABELS_PATH):
+                with open(CNN_LABELS_PATH) as f:
+                    _image_labels = json.load(f)
+            else:
+                print(f"CNN labels not found at {CNN_LABELS_PATH}")
+                _image_labels = None
+
+        except Exception as e:
+            print(f"Warning: could not load CNN image model: {e}")
+            _image_model = None
+            _image_labels = None
 
     return _image_model, _image_labels
 
 
-
-
-
 # Optional CNN image model (load if available)
-CNN_MODEL_PATH = os.path.join('models', 'skin_cnn.h5')
-CNN_LABELS_PATH = os.path.join('models', 'skin_cnn_labels.json')
 image_model = None
 image_labels = None
 
-if os.path.exists(CNN_MODEL_PATH) and os.path.exists(CNN_LABELS_PATH):
-    try:
-        from tensorflow import keras
-        image_model = keras.models.load_model(CNN_MODEL_PATH)
-        with open(CNN_LABELS_PATH) as f:
-            image_labels = json.load(f)
+try:
+    get_image_model()
+    if image_model is not None:
         print("Loaded CNN image model for skin disease detection.")
-    except Exception as e:
-        print(f"Warning: could not load CNN image model: {e}")
-        image_model = None
-        image_labels = None
+except Exception as e:
+    print(f"CNN image model not loaded: {e}")
+    image_model = None
+    image_labels = None
 
 
 
@@ -630,6 +641,7 @@ def scan_image(request):
             img_batch = np.expand_dims(img_batch, axis=0)
             
             # Run CNN model if available, else fallback to basic image analysis
+            image_model, image_labels = get_image_model()
             if image_model and image_labels:
                 preds = image_model.predict(img_batch)
                 idx = int(np.argmax(preds))
