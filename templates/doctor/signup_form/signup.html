@@ -545,6 +545,9 @@
           {{ form.year_of_registration }}
           <span class="focus-border"></span>
         </div>
+        <div id="yor-hint" style="font-size: 0.8rem; color: #8E44AD; margin-left: 50px; margin-top: 5px; display: none;">
+          <i class="fa fa-info-circle"></i> Minimum registration year: <span id="min-reg-year">-</span> (must be at least 24 years old at registration)
+        </div>
         {% if form.year_of_registration.errors %}
           <div class="field-error">{{ form.year_of_registration.errors.0 }}</div>
         {% endif %}
@@ -972,38 +975,55 @@
     // DOB and Year of Registration validation
     const dob = document.querySelector('input[name="dob"]');
     const yor = document.querySelector('input[name="year_of_registration"]');
+    const yorHint = document.getElementById('yor-hint');
+    const minRegYearSpan = document.getElementById('min-reg-year');
     
     if (dob && yor) {
       const validateDates = () => {
-        const dobValue = new Date(dob.value);
-        const yorValue = new Date(yor.value);
+        const dobValue = dob.value ? new Date(dob.value) : null;
+        const yorValue = yor.value ? parseInt(yor.value) : null;
+        const currentYear = new Date().getFullYear();
         
-        if (dobValue && yorValue) {
-          // Calculate age at registration
-          const ageAtReg = yorValue.getFullYear() - dobValue.getFullYear();
-          const monthDiff = yorValue.getMonth() - dobValue.getMonth();
+        // Show hint when DOB is entered
+        if (dobValue && !isNaN(dobValue.getTime())) {
+          const dobYear = dobValue.getFullYear();
+          const minRegYear = dobYear + 24;
           
-          if (monthDiff < 0 || (monthDiff === 0 && yorValue.getDate() < dobValue.getDate())) {
-            ageAtReg--;
-          }
+          // Show hint
+          yorHint.style.display = 'block';
+          minRegYearSpan.textContent = minRegYear;
           
-          if (ageAtReg >= 24 && yorValue <= new Date()) {
-            dob.style.borderColor = '#28a745';
-            yor.style.borderColor = '#28a745';
-            dob.setCustomValidity('');
-            yor.setCustomValidity('');
-          } else {
-            dob.style.borderColor = '#dc3545';
-            yor.style.borderColor = '#dc3545';
+          // Validate if YOR is entered
+          if (yorValue) {
+            const ageAtReg = yorValue - dobYear;
             
-            if (ageAtReg < 24) {
-              dob.setCustomValidity('You should be at least 24 years old when registering');
-              yor.setCustomValidity('');
-            } else {
+            if (yorValue > currentYear) {
+              // Future year
+              dob.style.borderColor = '#dc3545';
+              yor.style.borderColor = '#dc3545';
               dob.setCustomValidity('');
               yor.setCustomValidity('Registration year cannot be in the future');
+            } else if (ageAtReg < 24) {
+              // Too young at registration
+              dob.style.borderColor = '#dc3545';
+              yor.style.borderColor = '#dc3545';
+              dob.setCustomValidity(`You should be at least 24 years old. For DOB ${dobYear}, minimum registration year is ${minRegYear}`);
+              yor.setCustomValidity(`You should be at least 24 years old. For DOB ${dobYear}, minimum registration year is ${minRegYear}`);
+            } else {
+              // Valid
+              dob.style.borderColor = '#28a745';
+              yor.style.borderColor = '#28a745';
+              dob.setCustomValidity('');
+              yor.setCustomValidity('');
             }
+          } else {
+            // Reset if no YOR entered
+            dob.style.borderColor = '#FFB3B3';
+            yor.style.borderColor = '#FFB3B3';
           }
+        } else {
+          // Hide hint if no DOB
+          yorHint.style.display = 'none';
         }
       };
       
