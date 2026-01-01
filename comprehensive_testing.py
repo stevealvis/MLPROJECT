@@ -29,8 +29,7 @@ from accounts.forms import (
     PatientProfileUpdateForm, DoctorProfileUpdateForm,
     validate_password_strength, validate_username, validate_mobile_number
 )
-# Import using backward compatibility aliases
-from accounts.models import Patient, Doctor, patient, doctor
+from main_app.models import patient, doctor
 
 class SecurityValidationTests(unittest.TestCase):
     """Test enhanced password security and validation"""
@@ -115,9 +114,7 @@ class FormValidationTests(unittest.TestCase):
             'dob': '1990-01-01',
             'age': 34,
             'gender': 'male',
-            'address_line': '123 Main Street',
-            'city': 'Mumbai',
-            'state': 'Maharashtra',
+            'address': '123 Main Street, City, State 12345',
             'mobile_no': '9876543210',
             'password': 'SecurePassword123!@#',
             'password1': 'SecurePassword123!@#'
@@ -135,9 +132,7 @@ class FormValidationTests(unittest.TestCase):
             'dob': '1990-01-01',
             'age': 33,
             'gender': 'male',
-            'address_line': '123 Main Street',
-            'city': 'Mumbai',
-            'state': 'Maharashtra',
+            'address': '123 Main Street, City, State 12345',
             'mobile_no': '9876543210',
             'password': 'password123',
             'password1': 'password123'
@@ -155,15 +150,13 @@ class FormValidationTests(unittest.TestCase):
             'name': 'Dr. Jane Smith',
             'dob': '1980-01-01',
             'gender': 'female',
-            'address_line': '456 Medical Center',
-            'city': 'Mumbai',
-            'state': 'Maharashtra',
+            'address': '456 Medical Center, City, State 12345',
             'mobile_no': '8765432109',
             'registration_no': 'MD123456789',
             'year_of_registration': 2005,
-            'qualification': 'MBBS',
-            'State_Medical_Council': 'Maharashtra',
-            'specialization': 'Dermatologist',
+            'qualification': 'MBBS MD',
+            'State_Medical_Council': 'State Medical Council',
+            'specialization': 'General Physician',
             'password': 'DoctorPass123!@#',
             'password1': 'DoctorPass123!@#'
         }
@@ -192,9 +185,9 @@ class FormValidationTests(unittest.TestCase):
             'mobile_no': '8765432109',
             'registration_no': 'MD123456789',
             'year_of_registration': 2005,
-            'qualification': 'MBBS',
-            'State_Medical_Council': 'Maharashtra',
-            'specialization': 'Dermatologist'
+            'qualification': 'MBBS MD',
+            'State_Medical_Council': 'State Medical Council',
+            'specialization': 'General Physician'
         }
         
         form = DoctorProfileUpdateForm(doctor_data)
@@ -205,18 +198,14 @@ class AuthenticationFlowTests(unittest.TestCase):
     
     def setUp(self):
         self.client = Client()
-        # Use unique username to avoid conflicts
-        import time
-        unique_id = int(time.time())
         self.test_user = User.objects.create_user(
-            username=f'testuser_{unique_id}',
-            email=f'test_{unique_id}@example.com',
+            username='testuser',
+            email='test@example.com',
             password='TestPassword123!@#'
         )
     
     def tearDown(self):
-        if hasattr(self, 'test_user') and self.test_user:
-            self.test_user.delete()
+        self.test_user.delete()
     
     def test_secure_admin_creation_script(self):
         """Test the secure admin creation script"""
@@ -254,12 +243,10 @@ class DatabaseIntegrityTests(unittest.TestCase):
     
     def test_user_model_integrity(self):
         """Test user model constraints"""
-        import time
-        unique_id = int(time.time())
         # Test unique constraints - this will fail because user already exists from setUp
         test_user2 = User.objects.create_user(
-            username=f'testuser2_{unique_id}',
-            email=f'test2_{unique_id}@example.com',
+            username='testuser2',
+            email='test2@example.com',
             password='password123'
         )
         self.assertIsNotNone(test_user2)
@@ -267,20 +254,16 @@ class DatabaseIntegrityTests(unittest.TestCase):
     
     def test_patient_model(self):
         """Test patient model creation"""
-        import time
-        unique_id = int(time.time())
         user = User.objects.create_user(
-            username=f'patient_test_{unique_id}',
-            email=f'patient_test_{unique_id}@example.com',
+            username='patient_test',
+            email='patient_test@example.com',
             password='Password123!@#'
         )
         
-        patient_profile = Patient.objects.create(
+        patient_profile = patient.objects.create(
             user=user,
             name='Test Patient',
-            email=f'patient_test_{unique_id}@example.com',
             dob='1990-01-01',
-            age=34,
             address='Test Address',
             mobile_no='9876543210',
             gender='male'
@@ -288,6 +271,8 @@ class DatabaseIntegrityTests(unittest.TestCase):
         
         self.assertEqual(patient_profile.user, user)
         self.assertEqual(patient_profile.name, 'Test Patient')
+        self.assertTrue(patient_profile.is_patient)
+        self.assertFalse(patient_profile.is_doctor)
         
         # Cleanup
         patient_profile.delete()
@@ -295,32 +280,30 @@ class DatabaseIntegrityTests(unittest.TestCase):
     
     def test_doctor_model(self):
         """Test doctor model creation"""
-        import time
-        unique_id = int(time.time())
         user = User.objects.create_user(
-            username=f'doctor_test_{unique_id}',
-            email=f'doctor_test_{unique_id}@example.com',
+            username='doctor_test',
+            email='doctor_test@example.com',
             password='Password123!@#'
         )
         
-        from datetime import date
-        doctor_profile = Doctor.objects.create(
+        doctor_profile = doctor.objects.create(
             user=user,
             name='Dr. Test',
-            email=f'doctor_test_{unique_id}@example.com',
             dob='1980-01-01',
             address='Test Address',
             mobile_no='9876543210',
             gender='female',
-            registration_no=f'MD123456{unique_id}',
-            year_of_registration=date(2005, 1, 1),
-            qualification='MBBS',
-            State_Medical_Council='Maharashtra',
-            specialization='Dermatologist'
+            registration_no='MD123456789',
+            year_of_registration=2005,
+            qualification='MBBS MD',
+            State_Medical_Council='Test Council',
+            specialization='General Physician'
         )
         
         self.assertEqual(doctor_profile.user, user)
         self.assertEqual(doctor_profile.name, 'Dr. Test')
+        self.assertTrue(doctor_profile.is_doctor)
+        self.assertFalse(doctor_profile.is_patient)
         
         # Cleanup
         doctor_profile.delete()

@@ -135,10 +135,6 @@ class Doctor(models.Model):
         unique_together = ['registration_no']  # Ensure unique registration numbers
 
 
-# Backward compatibility aliases for existing code
-patient = Patient
-doctor = Doctor
-
 class UserProfile(models.Model):
     """Extended user profile for both patients and doctors"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
