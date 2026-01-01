@@ -167,17 +167,33 @@ CNN_LABELS_PATH = os.path.join('models', 'skin_cnn_labels.json')
 image_model = None
 image_labels = None
 
-if os.path.exists(CNN_MODEL_PATH) and os.path.exists(CNN_LABELS_PATH):
+if os.path.exists(CNN_MODEL_PATH):
     try:
         from tensorflow import keras
         image_model = keras.models.load_model(CNN_MODEL_PATH)
-        with open(CNN_LABELS_PATH) as f:
-            image_labels = json.load(f)
-        print("Loaded CNN image model for skin disease detection.")
+        
+        if os.path.exists(CNN_LABELS_PATH):
+            with open(CNN_LABELS_PATH) as f:
+                image_labels = json.load(f)
+            print("Loaded CNN image model for skin disease detection with labels.")
+        else:
+            print(f"Warning: CNN model loaded but labels file not found at {CNN_LABELS_PATH}")
+            # Use default labels
+            image_labels = [
+                "Acne", "Fungal infection", "Psoriasis", "Impetigo", "Chicken pox",
+                "Eczema", "Dermatitis", "Melanoma", "Basal cell carcinoma",
+                "Squamous cell carcinoma", "Rosacea", "Vitiligo", "Hives",
+                "Scabies", "Ringworm", "Seborrheic dermatitis", "Lichen planus",
+                "Melasma", "Keratosis pilaris", "Cold sore"
+            ]
+            print("Using default skin disease labels.")
     except Exception as e:
         print(f"Warning: could not load CNN image model: {e}")
+        print("Falling back to basic image analysis.")
         image_model = None
         image_labels = None
+else:
+    print(f"CNN model not found at {CNN_MODEL_PATH}")
 
 
 
